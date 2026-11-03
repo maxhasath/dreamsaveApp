@@ -1,0 +1,25 @@
+{
+  "name": "dreamsave-automation",
+  "version": "1.0.0",
+  "description": "DreamSave Android UI Automation — Appium + WebdriverIO + TypeScript",
+  "scripts": {
+    "test": "wdio run wdio.conf.ts",
+    "test:group-creation": "wdio run wdio.conf.ts --spec ./tests/groupCreation.test.ts",
+    "tsc:check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.11.0",
+    "@wdio/appium-service": "^8.36.0",
+    "@wdio/cli": "^8.36.0",
+    "@wdio/globals": "^8.36.0",
+    "@wdio/local-runner": "^8.36.0",
+    "@wdio/mocha-framework": "^8.36.0",
+    "@wdio/spec-reporter": "^8.36.0",
+    "@wdio/types": "^8.36.0",
+    "appium": "^2.4.0",
+    "appium-uiautomator2-driver": "^3.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

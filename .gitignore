@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Appium / test artifacts
+appium.log
+screenshots/
+apps/*.apk
+
+# Debug scratch files
+debug_*.png
+debug_*.xml
+c[0-9]*_output.txt
+run_c*.ps1
+find_*.ps1
+read_results.ps1
+run5groups.ps1
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+*.docx
+gemini-code-*
