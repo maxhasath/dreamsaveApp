@@ -24,11 +24,6 @@ export class ReviewPage extends BasePage {
 
   async getTotalMemberCount(minExpected = 1): Promise<string> {
     const seenNames = new Set<string>();
-    // Reset outer page to top.
-    for (let i = 0; i < 4; i++) {
-      await this.scrollUp(400, 1900);
-      await browser.pause(200); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
-    }
     await browser.pause(400); // intentional stabilization: page settle before getPageSource() — avoids mid-animation XML
     // Use getPageSource() XML parsing instead of findElements — bypasses UIAutomator2's
     // visibility filter which silently drops RecyclerView rows that are partially off-screen.
