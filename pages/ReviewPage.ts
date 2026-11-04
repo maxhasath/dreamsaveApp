@@ -65,16 +65,16 @@ export class ReviewPage extends BasePage {
   }
 
   async tapConfirmSetup(): Promise<void> {
-    // UiScrollable.scrollIntoView targets btn_confirm within its scrollable ancestor
-    // (the outer ScrollView). Because btn_confirm is a sibling of rcv_member_totals — not
-    // a child of the inner RecyclerView — Android scrolls the outer container directly.
-    // This is deterministic and scales to any member count without a blind iteration loop.
-    const confirmEl = await $(
+    // UiScrollable.scrollIntoView brings btn_confirm into the viewport.
+    // The returned element reference is discarded — coordinates from a UiScrollable query
+    // can be unreliable immediately post-scroll. waitAndTap re-resolves a fresh element
+    // reference, waits for it to be displayed, then taps it safely.
+    await $(
       `android=new UiScrollable(new UiSelector().scrollable(true))` +
       `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/btn_confirm"))`,
     );
-    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration before tap
-    await this.tapElement(confirmEl);
+    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration before element re-resolution
+    await this.waitAndTap(s('btn_confirm'), 10000);
 
     await this.waitForElement(s('rd_option_one'));
     await this.waitAndTap(s('rd_option_one'));
