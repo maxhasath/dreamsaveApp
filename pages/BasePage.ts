@@ -85,6 +85,29 @@ export class BasePage {
     await driver.hideKeyboard().catch(() => {});
   }
 
+  async waitForKeyboardClosed(timeout = 3000): Promise<void> {
+    try {
+      await browser.waitUntil(
+        async () => !(await driver.isKeyboardShown()),
+        { timeout, interval: 100 },
+      );
+    } catch {
+      console.warn('waitForKeyboardClosed: timed out — keyboard state uncertain, continuing');
+    }
+  }
+
+  async waitForOptionalElement(selector: string, timeout = 600): Promise<boolean> {
+    try {
+      await browser.waitUntil(
+        () => $(selector).isDisplayed().catch(() => false),
+        { timeout, interval: 100 },
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   protected async getPageSource(): Promise<string> {
     return driver.getPageSource();
   }

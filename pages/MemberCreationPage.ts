@@ -64,10 +64,10 @@ export class MemberCreationPage extends BasePage {
     await $(s('edt_first_name')).waitForExist({ timeout: 15000 });
     await this.typeViaShell(s('edt_first_name'), member.firstName);
     await this.hideKeyboard();
-    await browser.pause(500); // keyboard close animation
+    await this.waitForKeyboardClosed();
     await this.typeViaShell(s('edt_last_name'), member.lastName);
     await this.hideKeyboard();
-    await browser.pause(300); // keyboard close animation
+    await this.waitForKeyboardClosed();
 
     if (member.gender === 'Female') {
       await this.waitAndTap(s('rd_female'));
@@ -98,9 +98,6 @@ export class MemberCreationPage extends BasePage {
     if (await okBtn.waitForExist({ timeout: 4000 }).then(() => true).catch(() => false)) {
       await this.tapElement(okBtn);
     }
-    // If the picker did not open, the field accepts the default date silently.
-    await browser.pause(300); // dialog close animation
-
     await this.waitAndTap(s('btn_next'));
   }
 
@@ -115,7 +112,7 @@ export class MemberCreationPage extends BasePage {
     await $(s('edt_adults')).waitForExist({ timeout: 10000 });
     await this.typeViaShell(s('edt_adults'), member.adultsInFamily);
     await this.hideKeyboard();
-    await browser.pause(300); // keyboard close animation
+    await this.waitForKeyboardClosed();
     await this.typeViaShell(s('edt_dependents'), member.dependents);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_next'));
@@ -126,7 +123,7 @@ export class MemberCreationPage extends BasePage {
     const phone = member.mobileNumber.replace(/^0/, '');
     await this.typeViaShell(s('edt_phone_number'), phone);
     await this.hideKeyboard();
-    await browser.pause(300); // keyboard close animation
+    await this.waitForKeyboardClosed();
     await this.typeViaShell(s('edt_re_enter_number'), phone);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_next'));
@@ -160,8 +157,6 @@ export class MemberCreationPage extends BasePage {
   }
 
   private async acceptPermissionAgreement(): Promise<void> {
-    await browser.pause(500); // screen transition: allow permission agreement screen to load
-
     // Scroll scr_member_view to end so rd_yes (last element) is in view.
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
@@ -170,7 +165,7 @@ export class MemberCreationPage extends BasePage {
 
     // rd_yes centre may overlap the nav bar — tapElement handles the nav-bar-safe nudge.
     const rdYesEl = await $(s('rd_yes'));
-    await rdYesEl.waitForDisplayed({ timeout: 10000 });
+    await rdYesEl.waitForDisplayed({ timeout: 15000 });
     await this.tapElement(rdYesEl);
     await browser.pause(700); // radio selection state: settle before next scroll
 
@@ -193,7 +188,10 @@ export class MemberCreationPage extends BasePage {
     const createEl = await $(s('btn_create'));
     await createEl.waitForDisplayed({ timeout: 10000 });
     await this.tapElement(createEl);
-    await browser.pause(2000); // API call: member creation hits the server; dialog may appear after
+    await browser.waitUntil(
+      async () => await this.isDisplayed(s('btn_ok')) || await this.isDisplayed(s('btn_proceed')),
+      { timeout: 15000, interval: 500 },
+    ).catch(() => {});
 
     if (await this.isDisplayed(s('btn_ok'))) {
       await this.waitAndTap(s('btn_ok'));
@@ -201,8 +199,6 @@ export class MemberCreationPage extends BasePage {
   }
 
   private async completeProfileOverview(): Promise<void> {
-    await browser.pause(1500); // screen transition: profile overview slide-in animation
-
     // Profile overview uses nestedScrollView (not scr_member_view).
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true)).scrollToEnd(5)`);
@@ -211,11 +207,10 @@ export class MemberCreationPage extends BasePage {
 
     // btn_proceed (Done) — tapElement is nav-bar-safe and handles clickable:false.
     const doneEl = await $(s('btn_proceed'));
-    await doneEl.waitForExist({ timeout: 15000 });
+    await doneEl.waitForExist({ timeout: 20000 });
     await this.tapElement(doneEl);
-    await browser.pause(700); // screen transition: profile overview exit animation
 
-    if (await this.isDisplayed(s('btn_ok'))) {
+    if (await this.waitForOptionalElement(s('btn_ok'), 1000)) {
       await this.waitAndTap(s('btn_ok'));
     }
   }
@@ -270,7 +265,6 @@ export class MemberCreationPage extends BasePage {
     await this.typeText(s('edt_cost_goal'), member.savingsGoal.targetAmount);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_save_goal'));
-    await browser.pause(1500); // screen transition: goal save and navigation to next step
   }
 
   async createFullMemberProfile(member: MemberData): Promise<void> {

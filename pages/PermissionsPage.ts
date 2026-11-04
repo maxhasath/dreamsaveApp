@@ -14,7 +14,6 @@ export class PermissionsPage extends BasePage {
   private async dismissImportantNote(): Promise<void> {
     try {
       await this.waitAndTap(s('btn_ok'), 15000);
-      await browser.pause(500); // dialog close animation
     } catch { /* not present */ }
   }
 
@@ -36,7 +35,10 @@ export class PermissionsPage extends BasePage {
     for (let i = 0; i < MAX_PERMISSION_DIALOGS; i++) {
       const dismissed = await this.allowPermission();
       if (!dismissed) break;
-      await browser.pause(1500); // polling: sequential permission dialogs need settle time between dismissals
+      await browser.waitUntil(
+        async () => await this.isDisplayed(ALLOW_BTN) || await this.isDisplayed(ALLOW_FOREGROUND_BTN) || await this.isDisplayed(WHILE_USING_BTN),
+        { timeout: 2000, interval: 100 },
+      ).catch(() => {});
     }
   }
 }

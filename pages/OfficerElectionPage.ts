@@ -3,16 +3,12 @@ import type { OfficerAssignment } from '../data/testData';
 
 export class OfficerElectionPage extends BasePage {
   private async navigateToOfficerSetup(): Promise<void> {
-    await browser.pause(2000); // screen transition: allow officer election screen to fully load
-
-    if (await this.isDisplayed(s('btn_ok'))) {
+    if (await this.waitForOptionalElement(s('btn_ok'), 3000)) {
       await this.waitAndTap(s('btn_ok'));
-      await browser.pause(500); // dialog close animation
     }
 
-    if (await this.isDisplayed(s('btn_done'))) {
+    if (await this.waitForOptionalElement(s('btn_done'), 2000)) {
       await this.waitAndTap(s('btn_done'));
-      await browser.pause(1500); // screen transition: checklist returns after btn_done dismissal
     }
 
     const electOfficersEl = await $(byText('txt_item', 'Elect Officers'));
@@ -20,7 +16,7 @@ export class OfficerElectionPage extends BasePage {
       await this.tapElement(electOfficersEl);
     }
 
-    await this.waitForElement(s('btn_start'), 15000);
+    await this.waitForElement(s('btn_start'), 20000);
     await this.waitAndTap(s('btn_start'));
     await this.waitForElement(s('btn_next'));
     await this.waitAndTap(s('btn_next'));

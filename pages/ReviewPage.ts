@@ -2,9 +2,7 @@ import { BasePage, s, byText } from './BasePage';
 
 export class ReviewPage extends BasePage {
   async waitForReviewScreen(): Promise<void> {
-    await browser.pause(1500); // stabilise after officer election
-
-    const alreadyVisible = await $(s('tv_confirm_cycle_data_title')).isDisplayed().catch(() => false);
+    const alreadyVisible = await this.waitForOptionalElement(s('tv_confirm_cycle_data_title'), 2000);
     if (!alreadyVisible) {
       // After officer/bookkeeper setup, the app returns to the setup checklist.
       // Tap "Register Group" to navigate to the Confirm Cycle Data screen.

@@ -19,8 +19,7 @@ export class GroupSetupPage extends BasePage {
     await this.tapElement(groupProfileItem);
 
     // 4. Grant location permission if the system dialog appears.
-    await browser.pause(1000); // optional system dialog: location permission may take a moment to appear
-    if (await this.isDisplayed(LOCATION_ALLOW_BTN)) {
+    if (await this.waitForOptionalElement(LOCATION_ALLOW_BTN, 1000)) {
       await this.waitAndTap(LOCATION_ALLOW_BTN, 5000);
     }
 
@@ -53,7 +52,7 @@ export class GroupSetupPage extends BasePage {
 
   async selectGroupType(type: string): Promise<void> {
     await this.hideKeyboard();
-    await browser.pause(500); // keyboard close animation
+    await this.waitForKeyboardClosed();
     // rd_real_group / rd_practice_group are below the fold; scroll into view then tap.
     if (type === 'Real Group') {
       await this.scrollIntoViewAndTap('rd_real_group');
@@ -75,8 +74,7 @@ export class GroupSetupPage extends BasePage {
     // btn_next is below the radio buttons; scroll to it
     await this.scrollIntoViewAndTap('btn_next');
     // A country-mismatch dialog may appear ("Is ZAMBIA the correct country selection?").
-    await browser.pause(1000); // optional dialog: country-mismatch confirmation may take a moment to appear
-    if (await this.isDisplayed(s('btn_ok'))) {
+    if (await this.waitForOptionalElement(s('btn_ok'), 1200)) {
       await this.waitAndTap(s('btn_ok'), 5000);
     }
   }
