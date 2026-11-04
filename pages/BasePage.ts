@@ -14,9 +14,22 @@ export const s = (name: string) => `id:${APP_PKG}:id/${name}`;
 export const byText = (resId: string, text: string) =>
   `android=new UiSelector().resourceId("${APP_PKG}:id/${resId}").text("${text}")`;
 
-const NAV_BAR_Y = 2310; // y ≥ this falls inside the Android nav bar on the test device
-
 export class BasePage {
+  // Cached nav-bar threshold derived from actual device height on first use.
+  // Elements whose centre falls at or below this y are nudged up to avoid the nav bar.
+  private static _navBarY: number | null = null;
+
+  private async getNavBarThreshold(): Promise<number> {
+    if (BasePage._navBarY === null) {
+      try {
+        const { height } = await driver.getWindowSize();
+        BasePage._navBarY = Math.floor(height * 0.92);
+      } catch {
+        BasePage._navBarY = 2310; // fallback if getWindowSize() is unavailable
+      }
+    }
+    return BasePage._navBarY;
+  }
   // Waits for a full-screen loading overlay to disappear.
   async waitForLoader(timeout = 30000): Promise<void> {
     try {
@@ -42,7 +55,8 @@ export class BasePage {
     const { width, height } = await el.getSize();
     const cx = x + width / 2;
     const cy = y + height / 2;
-    await driver.execute('mobile: clickGesture', { x: cx, y: cy > NAV_BAR_Y ? y + 10 : cy });
+    const navBarY = await this.getNavBarThreshold();
+    await driver.execute('mobile: clickGesture', { x: cx, y: cy > navBarY ? y + 10 : cy });
   }
 
   async tap(selector: string): Promise<void> {
@@ -148,15 +162,6 @@ export class BasePage {
     const displayed = await this.isDisplayed(selector);
     if (displayed) await this.waitAndTap(selector);
     return displayed;
-  }
-
-  // Raw ADB coordinate tap — use ONLY for system UI elements with no resource IDs
-  // (e.g. elements inside hardware nav-bar overlays that Appium cannot reach).
-  async tapByCoordinates(x: number, y: number): Promise<void> {
-    await driver.execute('mobile: shell', {
-      command: 'input',
-      args: ['tap', String(Math.round(x)), String(Math.round(y))],
-    });
   }
 
   // Waits for selector then taps via mobile: clickGesture (nav-bar-safe).

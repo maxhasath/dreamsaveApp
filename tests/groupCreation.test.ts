@@ -5,7 +5,7 @@
 //
 // Design rules:
 //   - All assertions live here, never in page objects.
-//   - Explicit waits only — no browser.pause() except after system permission dialogs.
+//   - Explicit waits only — zero undocumented browser.pause() calls anywhere in the repo.
 //   - Each `it` block maps to one numbered step in Workflow_Steps.md.
 
 import { WelcomePage }        from '../pages/WelcomePage';
