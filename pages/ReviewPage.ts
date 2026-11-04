@@ -39,7 +39,9 @@ export class ReviewPage extends BasePage {
         }
       }
       if (seenNames.size >= minExpected) break;
-      await this.scrollDown(400, 1900, 0.2);
+      // Gesture starts at y=1950, inside the RecyclerView (which begins at ~y=1900).
+      // This scrolls the inner list only — the outer ScrollView (and btn_confirm) stays put.
+      await this.scrollDown(1950, 350, 0.6);
       await browser.pause(400); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
     // Page is left near the bottom — caller must read top-of-page elements
@@ -58,14 +60,15 @@ export class ReviewPage extends BasePage {
   }
 
   async tapConfirmSetup(): Promise<void> {
-    // UiScrollable.scrollIntoView brings btn_confirm into the viewport in one scroll.
-    // waitAndTap then re-resolves a fresh element reference and waits for it to be
-    // displayed before tapping — no blind loops, no hardcoded coordinates.
-    await $(
-      `android=new UiScrollable(new UiSelector().scrollable(true))` +
-      `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/btn_confirm"))`,
-    );
-    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration
+    // Scroll the outer ScrollView until btn_confirm appears in the page XML.
+    // Gesture in y=400–800 (above the RecyclerView at ~y=1900) so the outer ScrollView
+    // handles each step — the inner RecyclerView is left untouched.
+    for (let i = 0; i < 10; i++) {
+      const source = await this.getPageSource();
+      if (source.includes(`${APP_PKG}:id/btn_confirm`)) break;
+      await this.scrollDown(400, 800, 0.5);
+      await browser.pause(300); // intentional stabilization: scroll gesture momentum
+    }
     await this.waitAndTap(s('btn_confirm'), 10000);
 
     // "Please Review Carefully" dialog — "Yes, continue" (rd_option_one) then Ok.
