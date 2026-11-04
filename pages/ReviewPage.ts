@@ -47,12 +47,8 @@ export class ReviewPage extends BasePage {
       await this.scrollDown(400, 1900, 0.2);
       await browser.pause(400); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
-    // Scroll back to top so tv_loan_fund / tv_social_fund remain accessible.
-    for (let i = 0; i < 5; i++) {
-      await this.scrollUp(400, 1900, 1.0);
-      await browser.pause(200); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
-    }
-    await browser.pause(400); // intentional stabilization: page settle — ensures RecyclerView is fully rendered
+    // Page is left near the bottom — caller must read top-of-page elements
+    // (tv_loan_fund, tv_social_fund) BEFORE calling this method.
     return String(seenNames.size);
   }
 

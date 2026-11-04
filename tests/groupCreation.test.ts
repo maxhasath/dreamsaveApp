@@ -134,17 +134,20 @@ describe('DreamSave — Group Creation Flow', () => {
   it('Step 8 — reviews cycle data and verifies member count and fund balances', async () => {
     await review.waitForReviewScreen();
 
-    // Confirm all members appear in the review list
-    const memberCount = await review.getTotalMemberCount(testData.members.length);
-    expect(parseInt(memberCount, 10)).toBe(testData.members.length);
-
-    // Verify displayed fund totals match configured opening balances.
+    // Read fund balances first while the page is at the top.
     // Note: DreamSave may display formatted currency (e.g. "50,000 ZMW").
     const loanFund   = await review.getDisplayedLoanFundBalance();
     const socialFund = await review.getDisplayedSocialFundBalance();
     expect(loanFund).toContain('50');
     expect(socialFund).toContain('2');
 
+    // Count members by scrolling down through the list once.
+    // getTotalMemberCount leaves the page near the bottom — no scroll-back-to-top needed
+    // because fund balances are already read above.
+    const memberCount = await review.getTotalMemberCount(testData.members.length);
+    expect(parseInt(memberCount, 10)).toBe(testData.members.length);
+
+    // Page is already near the bottom; UiScrollable reaches btn_confirm with minimal travel.
     await review.tapConfirmSetup();
   });
 
