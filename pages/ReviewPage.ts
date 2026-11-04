@@ -1,4 +1,4 @@
-import { BasePage, s, byText } from './BasePage';
+import { BasePage, s, byText, APP_PKG } from './BasePage';
 
 export class ReviewPage extends BasePage {
   async waitForReviewScreen(): Promise<void> {
@@ -65,16 +65,16 @@ export class ReviewPage extends BasePage {
   }
 
   async tapConfirmSetup(): Promise<void> {
-    // btn_confirm is below rcv_member_totals on the outer ScrollView.
-    // Gesture in the y=400-1200 band (above the RecyclerView at ~y=1900) so the outer
-    // ScrollView — not the inner RecyclerView — handles each scroll step.
-    for (let i = 0; i < 20; i++) {
-      await this.scrollDown(400, 800);
-      await browser.pause(700); // intentional stabilization: scroll momentum settle before getPageSource() poll
-      const source = await this.getPageSource();
-      if (source.includes(':id/btn_confirm')) break;
-    }
-    await this.waitAndTap(s('btn_confirm'), 15000);
+    // UiScrollable.scrollIntoView targets btn_confirm within its scrollable ancestor
+    // (the outer ScrollView). Because btn_confirm is a sibling of rcv_member_totals — not
+    // a child of the inner RecyclerView — Android scrolls the outer container directly.
+    // This is deterministic and scales to any member count without a blind iteration loop.
+    const confirmEl = await $(
+      `android=new UiScrollable(new UiSelector().scrollable(true))` +
+      `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/btn_confirm"))`,
+    );
+    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration before tap
+    await this.tapElement(confirmEl);
 
     await this.waitForElement(s('rd_option_one'));
     await this.waitAndTap(s('rd_option_one'));
