@@ -65,17 +65,22 @@ export class ReviewPage extends BasePage {
   }
 
   async tapConfirmSetup(): Promise<void> {
-    // UiScrollable.scrollIntoView brings btn_confirm into the viewport.
-    // The returned element reference is discarded — coordinates from a UiScrollable query
-    // can be unreliable immediately post-scroll. waitAndTap re-resolves a fresh element
-    // reference, waits for it to be displayed, then taps it safely.
+    // Single deterministic scroll: UiScrollable brings btn_confirm into the viewport.
     await $(
       `android=new UiScrollable(new UiSelector().scrollable(true))` +
       `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/btn_confirm"))`,
     );
-    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration before element re-resolution
+    await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration
+    // UiScrollable can land btn_confirm at the very bottom of the viewport, right at the
+    // gesture-nav-bar boundary. One small scroll (120 px content travel) lifts it clear
+    // so the element centrepoint is safely above the nav-bar zone before we tap.
+    await this.scrollDown(400, 800, 0.15);
+    await browser.pause(300); // intentional stabilization: micro-scroll settle
+    // waitAndTap re-resolves a fresh element reference, waits for it to be displayed,
+    // then taps via tapElement — no hardcoded coordinates.
     await this.waitAndTap(s('btn_confirm'), 10000);
 
+    // "Please Review Carefully" dialog — "Yes, continue" (rd_option_one) then Ok.
     await this.waitForElement(s('rd_option_one'));
     await this.waitAndTap(s('rd_option_one'));
     await this.waitAndTap(s('btn_ok'));
