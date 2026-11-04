@@ -22,7 +22,7 @@ export class ReviewPage extends BasePage {
     await this.waitForElement(s('tv_confirm_cycle_data_title'));
   }
 
-  async getTotalMemberCount(): Promise<string> {
+  async getTotalMemberCount(minExpected = 1): Promise<string> {
     const seenNames = new Set<string>();
     // Reset outer page to top.
     for (let i = 0; i < 4; i++) {
@@ -33,6 +33,7 @@ export class ReviewPage extends BasePage {
     // Use getPageSource() XML parsing instead of findElements — bypasses UIAutomator2's
     // visibility filter which silently drops RecyclerView rows that are partially off-screen.
     // Accumulate names from each scroll position so recycled views are counted only once.
+    // Break as soon as minExpected unique names are found to avoid unnecessary scrolling.
     for (let swipe = 0; swipe < 20; swipe++) {
       const source = await this.getPageSource();
       // UIAutomator2 XML: text= appears BEFORE resource-id= within the same element tag.
@@ -42,6 +43,7 @@ export class ReviewPage extends BasePage {
           seenNames.add(match[1].trim());
         }
       }
+      if (seenNames.size >= minExpected) break;
       await this.scrollDown(400, 1900, 0.2);
       await browser.pause(400); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
@@ -65,19 +67,14 @@ export class ReviewPage extends BasePage {
   }
 
   async tapConfirmSetup(): Promise<void> {
-    // Single deterministic scroll: UiScrollable brings btn_confirm into the viewport.
+    // UiScrollable.scrollIntoView brings btn_confirm into the viewport in one scroll.
+    // waitAndTap then re-resolves a fresh element reference and waits for it to be
+    // displayed before tapping — no blind loops, no hardcoded coordinates.
     await $(
       `android=new UiScrollable(new UiSelector().scrollable(true))` +
       `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/btn_confirm"))`,
     );
     await browser.pause(500); // intentional stabilization: UiScrollable fling deceleration
-    // UiScrollable can land btn_confirm at the very bottom of the viewport, right at the
-    // gesture-nav-bar boundary. One small scroll (120 px content travel) lifts it clear
-    // so the element centrepoint is safely above the nav-bar zone before we tap.
-    await this.scrollDown(400, 800, 0.15);
-    await browser.pause(300); // intentional stabilization: micro-scroll settle
-    // waitAndTap re-resolves a fresh element reference, waits for it to be displayed,
-    // then taps via tapElement — no hardcoded coordinates.
     await this.waitAndTap(s('btn_confirm'), 10000);
 
     // "Please Review Carefully" dialog — "Yes, continue" (rd_option_one) then Ok.

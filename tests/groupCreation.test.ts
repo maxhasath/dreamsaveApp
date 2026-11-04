@@ -135,7 +135,7 @@ describe('DreamSave — Group Creation Flow', () => {
     await review.waitForReviewScreen();
 
     // Confirm all members appear in the review list
-    const memberCount = await review.getTotalMemberCount();
+    const memberCount = await review.getTotalMemberCount(testData.members.length);
     expect(parseInt(memberCount, 10)).toBe(testData.members.length);
 
     // Verify displayed fund totals match configured opening balances.
