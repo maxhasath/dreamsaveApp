@@ -56,7 +56,7 @@ export class MemberCreationPage extends BasePage {
     const firstTimeEl = await $(byText('btn_radio', 'First Time User'));
     await firstTimeEl.waitForExist({ timeout: 5000 });
     await this.tapElement(firstTimeEl);
-    await browser.pause(400);
+    await browser.pause(400); // radio selection state: brief UI settle
     await this.waitAndTap(s('btn_next'), 8000);
   }
 
@@ -64,10 +64,10 @@ export class MemberCreationPage extends BasePage {
     await $(s('edt_first_name')).waitForExist({ timeout: 15000 });
     await this.typeViaShell(s('edt_first_name'), member.firstName);
     await this.hideKeyboard();
-    await browser.pause(500);
+    await browser.pause(500); // keyboard close animation
     await this.typeViaShell(s('edt_last_name'), member.lastName);
     await this.hideKeyboard();
-    await browser.pause(300);
+    await browser.pause(300); // keyboard close animation
 
     if (member.gender === 'Female') {
       await this.waitAndTap(s('rd_female'));
@@ -82,7 +82,7 @@ export class MemberCreationPage extends BasePage {
       `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/tv_value_item").text("${member.maritalStatus}"))`,
     );
     await this.tapElement(maritalEl);
-    await browser.pause(400);
+    await browser.pause(400); // UiScrollable scroll momentum settle
 
     const educationLabel = EDUCATION_MAP[member.educationLevel] ?? member.educationLevel;
     const eduEl = await $(
@@ -93,13 +93,13 @@ export class MemberCreationPage extends BasePage {
 
     // Birth date: opens a system scroll-wheel dialog. Dismiss it immediately with OK.
     await this.waitAndTap(s('view_birth_date'));
-    await browser.pause(800);
+    await browser.pause(800); // dialog open: system date picker may take a moment to animate in
     const okBtn = await $('android=new UiSelector().text("OK")');
     if (await okBtn.waitForExist({ timeout: 4000 }).then(() => true).catch(() => false)) {
       await this.tapElement(okBtn);
     }
     // If the picker did not open, the field accepts the default date silently.
-    await browser.pause(300);
+    await browser.pause(300); // dialog close animation
 
     await this.waitAndTap(s('btn_next'));
   }
@@ -115,7 +115,7 @@ export class MemberCreationPage extends BasePage {
     await $(s('edt_adults')).waitForExist({ timeout: 10000 });
     await this.typeViaShell(s('edt_adults'), member.adultsInFamily);
     await this.hideKeyboard();
-    await browser.pause(300);
+    await browser.pause(300); // keyboard close animation
     await this.typeViaShell(s('edt_dependents'), member.dependents);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_next'));
@@ -126,7 +126,7 @@ export class MemberCreationPage extends BasePage {
     const phone = member.mobileNumber.replace(/^0/, '');
     await this.typeViaShell(s('edt_phone_number'), phone);
     await this.hideKeyboard();
-    await browser.pause(300);
+    await browser.pause(300); // keyboard close animation
     await this.typeViaShell(s('edt_re_enter_number'), phone);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_next'));
@@ -140,12 +140,12 @@ export class MemberCreationPage extends BasePage {
     try {
       await $(s('scr_member_view')).waitForExist({ timeout: 10000 });
     } catch { /* proceed */ }
-    await browser.pause(400);
+    await browser.pause(400); // UiScrollable preparation: scroll container needs to settle
 
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* already at end or not scrollable */ }
-    await browser.pause(400);
+    await browser.pause(400); // UiScrollable scroll momentum settle
 
     // btn_next is clickable:false — use scrollIntoViewAndTap which calls tapElement internally.
     await this.scrollIntoViewAndTap('btn_next');
@@ -160,25 +160,25 @@ export class MemberCreationPage extends BasePage {
   }
 
   private async acceptPermissionAgreement(): Promise<void> {
-    await browser.pause(500);
+    await browser.pause(500); // screen transition: allow permission agreement screen to load
 
     // Scroll scr_member_view to end so rd_yes (last element) is in view.
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* not scrollable or already at end */ }
-    await browser.pause(400);
+    await browser.pause(400); // UiScrollable scroll momentum settle
 
     // rd_yes centre may overlap the nav bar — tapElement handles the nav-bar-safe nudge.
     const rdYesEl = await $(s('rd_yes'));
     await rdYesEl.waitForDisplayed({ timeout: 10000 });
     await this.tapElement(rdYesEl);
-    await browser.pause(700);
+    await browser.pause(700); // radio selection state: settle before next scroll
 
     // Scroll to end to reveal cb_agreement and btn_create.
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* already at end */ }
-    await browser.pause(400);
+    await browser.pause(400); // UiScrollable scroll momentum settle
 
     const cbEl = await $(s('cb_agreement'));
     await cbEl.waitForDisplayed({ timeout: 10000 });
@@ -188,12 +188,12 @@ export class MemberCreationPage extends BasePage {
     if (alreadyChecked !== 'true') {
       await this.tapElement(cbEl);
     }
-    await browser.pause(400);
+    await browser.pause(400); // checkbox state settle: allow UI to reflect new checked state
 
     const createEl = await $(s('btn_create'));
     await createEl.waitForDisplayed({ timeout: 10000 });
     await this.tapElement(createEl);
-    await browser.pause(2000);
+    await browser.pause(2000); // API call: member creation hits the server; dialog may appear after
 
     if (await this.isDisplayed(s('btn_ok'))) {
       await this.waitAndTap(s('btn_ok'));
@@ -201,19 +201,19 @@ export class MemberCreationPage extends BasePage {
   }
 
   private async completeProfileOverview(): Promise<void> {
-    await browser.pause(1500);
+    await browser.pause(1500); // screen transition: profile overview slide-in animation
 
     // Profile overview uses nestedScrollView (not scr_member_view).
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true)).scrollToEnd(5)`);
     } catch { /* already at end */ }
-    await browser.pause(500);
+    await browser.pause(500); // UiScrollable scroll momentum settle
 
     // btn_proceed (Done) — tapElement is nav-bar-safe and handles clickable:false.
     const doneEl = await $(s('btn_proceed'));
     await doneEl.waitForExist({ timeout: 15000 });
     await this.tapElement(doneEl);
-    await browser.pause(700);
+    await browser.pause(700); // screen transition: profile overview exit animation
 
     if (await this.isDisplayed(s('btn_ok'))) {
       await this.waitAndTap(s('btn_ok'));
@@ -270,7 +270,7 @@ export class MemberCreationPage extends BasePage {
     await this.typeText(s('edt_cost_goal'), member.savingsGoal.targetAmount);
     await this.hideKeyboard();
     await this.waitAndTap(s('btn_save_goal'));
-    await browser.pause(1500);
+    await browser.pause(1500); // screen transition: goal save and navigation to next step
   }
 
   async createFullMemberProfile(member: MemberData): Promise<void> {

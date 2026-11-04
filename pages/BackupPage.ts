@@ -15,7 +15,7 @@ export class BackupPage extends BasePage {
         if (await this.isDisplayed(s('rd_backup_later'))) {
           await this.waitAndTap(s('rd_backup_later'), 3000).catch(() => {});
           await this.waitAndTap(s('btn_ok'), 5000).catch(() => {});
-          await browser.pause(1500);
+          await browser.pause(1500); // screen transition: backup-later dialog close and navigation
           return true;
         }
         // Backup complete: app shows btn_next (by resource-id, consistent with rest of app).

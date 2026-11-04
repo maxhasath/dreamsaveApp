@@ -62,7 +62,7 @@ export class BasePage {
     const el = await $(selector);
     await el.waitForExist({ timeout: 10000 });
     await el.click();
-    await browser.pause(300);
+    await browser.pause(300); // stabilization: allow focus to settle before ADB shell text injection
     await driver.execute('mobile: shell', { command: 'input', args: ['text', text] });
   }
 

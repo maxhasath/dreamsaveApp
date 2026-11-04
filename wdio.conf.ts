@@ -1,7 +1,3 @@
-// @ts-nocheck
-// WDIO's config parser runs its own TS compilation pass that doesn't honour transpileOnly,
-// causing false-positive type errors on appium:* capability keys. @ts-nocheck disables
-// type checking for this file only; test files remain fully type-checked.
 import type { Options } from '@wdio/types';
 import { APP_PKG, APP_PATH } from './config/env';
 
