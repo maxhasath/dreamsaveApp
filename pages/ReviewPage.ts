@@ -33,7 +33,7 @@ export class ReviewPage extends BasePage {
     // Use getPageSource() XML parsing instead of findElements — bypasses UIAutomator2's
     // visibility filter which silently drops RecyclerView rows that are partially off-screen.
     // Accumulate names from each scroll position so recycled views are counted only once.
-    for (let swipe = 0; swipe < 12; swipe++) {
+    for (let swipe = 0; swipe < 20; swipe++) {
       const source = await this.getPageSource();
       // UIAutomator2 XML: text= appears BEFORE resource-id= within the same element tag.
       const memberMatches = source.matchAll(/text="([^"]+)"[^>]*?resource-id="[^"]*:id\/tv_name"/g);
@@ -42,7 +42,6 @@ export class ReviewPage extends BasePage {
           seenNames.add(match[1].trim());
         }
       }
-      if (seenNames.size >= 6) break;
       await this.scrollDown(400, 1900, 0.2);
       await browser.pause(400); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
@@ -69,13 +68,13 @@ export class ReviewPage extends BasePage {
     // btn_confirm is below rcv_member_totals on the outer ScrollView.
     // Gesture in the y=400-1200 band (above the RecyclerView at ~y=1900) so the outer
     // ScrollView — not the inner RecyclerView — handles each scroll step.
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       await this.scrollDown(400, 800);
       await browser.pause(700); // intentional stabilization: scroll momentum settle before getPageSource() poll
       const source = await this.getPageSource();
       if (source.includes(':id/btn_confirm')) break;
     }
-    await this.waitAndTap(s('btn_confirm'), 10000);
+    await this.waitAndTap(s('btn_confirm'), 15000);
 
     await this.waitForElement(s('rd_option_one'));
     await this.waitAndTap(s('rd_option_one'));
