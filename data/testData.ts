@@ -22,7 +22,7 @@ function generateGroupName(): string {
   return `Agent_${Date.now().toString().slice(-5)}`;
 }
 
-// Generates 6 unique name pairs. Gender pattern: Female, Male, Female, Male, Female, Male.
+// Generates 8 unique name pairs. Gender pattern: Female, Male alternating.
 // Matches the gender field assigned to each member slot in the members array below.
 function generateMemberNames(): Array<{ firstName: string; lastName: string }> {
   const femaleFirsts = pickUnique(FEMALE_FIRST_NAMES, 4);

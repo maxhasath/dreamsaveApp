@@ -110,7 +110,7 @@ describe('DreamSave — Group Creation Flow', () => {
     await financialRules.tapSave(testData.cycle.startDate, testData.cycle.shareOutDate);
   });
 
-  // ─── Step 6: Member Creation (6 members) ─────────────────────────────────────
+  // ─── Step 6: Member Creation ─────────────────────────────────────────────────
 
   for (const [index, member] of testData.members.entries()) {
     it(`Step 6 — creates member ${index + 1} of ${testData.members.length}: ${member.firstName} ${member.lastName}`, async () => {
@@ -134,7 +134,7 @@ describe('DreamSave — Group Creation Flow', () => {
   it('Step 8 — reviews cycle data and verifies member count and fund balances', async () => {
     await review.waitForReviewScreen();
 
-    // Confirm all 6 members appear in the review list
+    // Confirm all members appear in the review list
     const memberCount = await review.getTotalMemberCount();
     expect(parseInt(memberCount, 10)).toBe(testData.members.length);
 
