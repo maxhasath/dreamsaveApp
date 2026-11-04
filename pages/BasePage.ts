@@ -62,7 +62,7 @@ export class BasePage {
     const el = await $(selector);
     await el.waitForExist({ timeout: 10000 });
     await el.click();
-    await browser.pause(300); // stabilization: allow focus to settle before ADB shell text injection
+    await browser.pause(300); // intentional stabilization: allow focus to settle before ADB shell text injection
     await driver.execute('mobile: shell', { command: 'input', args: ['text', text] });
   }
 
@@ -105,6 +105,17 @@ export class BasePage {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async waitForCheckedState(el: WebdriverIO.Element, expected = 'true', timeout = 2000): Promise<void> {
+    try {
+      await browser.waitUntil(
+        async () => (await el.getAttribute('checked').catch(() => null)) === expected,
+        { timeout, interval: 100 },
+      );
+    } catch {
+      console.warn('waitForCheckedState: timed out — checked state uncertain, continuing');
     }
   }
 

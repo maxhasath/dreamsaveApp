@@ -62,17 +62,17 @@ export class FinancialRulesPage extends BasePage {
       // Tap a neighbour to surface btn_next, then restore the target if it got unchecked.
       const altIndex = targetIndex > 0 ? targetIndex - 1 : targetIndex + 1;
       await this.tapElement(checkboxes[altIndex]);
-      await browser.pause(500);
+      await this.waitForCheckedState(checkboxes[altIndex]);
       if (await cb.getAttribute('checked') !== 'true') {
         await this.tapElement(cb);
-        await browser.pause(400);
+        await this.waitForCheckedState(cb);
       }
     } else {
       await this.tapElement(cb);
-      await browser.pause(500);
+      await this.waitForCheckedState(cb);
       if (await cb.getAttribute('checked') !== 'true') {
         await this.tapElement(cb);
-        await browser.pause(300);
+        await this.waitForCheckedState(cb);
       }
     }
   }
@@ -81,7 +81,13 @@ export class FinancialRulesPage extends BasePage {
   // The app renders one page per selected term; we loop until no fields are visible.
   private async fillPerTermInterestPages(rate: string): Promise<void> {
     for (let page = 0; page < 5; page++) {
-      await browser.pause(2000);
+      await browser.waitUntil(
+        async () => {
+          const ff = await $$(s('edt_interest_rate'));
+          return ff.length > 0 && await ff[0].isDisplayed().catch(() => false);
+        },
+        { timeout: 5000, interval: 300 },
+      ).catch(() => {});
       const fields = await $$(s('edt_interest_rate'));
       if (fields.length === 0) break;
       if (!await fields[0].isDisplayed().catch(() => false)) break;
@@ -91,10 +97,9 @@ export class FinancialRulesPage extends BasePage {
           await field.clearValue();
           await field.setValue(rate);
           await this.hideKeyboard();
-          await browser.pause(300);
+          await this.waitForKeyboardClosed();
         }
       }
-      await browser.pause(1500);
       await this.waitAndTap(s('btn_next'), 10000);
     }
   }
@@ -151,7 +156,6 @@ export class FinancialRulesPage extends BasePage {
       await this.waitAndTap(s('rd_no_send_receipt'));
     }
     await this.waitAndTap(s('btn_done'));
-    await browser.pause(1000);
   }
 
   // Cycle Schedule: navigates from checklist → Cycle Schedule page, selects frequency
@@ -220,7 +224,6 @@ export class FinancialRulesPage extends BasePage {
       },
       { timeout: 5000, timeoutMsg: `Calendar for '${fieldId}' did not open` },
     );
-    await browser.pause(400);
 
     // Detect the ACTUAL month the calendar opened at — it may be cached from a prior run.
     const { month: calOpenMonth, year: calOpenYear } = await this.detectCalendarOpenedMonth();
@@ -229,7 +232,7 @@ export class FinancialRulesPage extends BasePage {
     const navBtn = monthsToNavigate > 0 ? s('view_next') : s('view_prev');
     for (let i = 0; i < Math.abs(monthsToNavigate); i++) {
       await this.waitAndTap(navBtn);
-      await browser.pause(400);
+      await browser.pause(400); // intentional stabilization: calendar month-nav animation — no end signal
     }
 
     // Tap the day — only one element with this numeric text is visible in a month-view calendar.
@@ -239,7 +242,7 @@ export class FinancialRulesPage extends BasePage {
 
     await this.waitAndTap(s('tv_ok'));
     await $(s('tv_ok')).waitForExist({ timeout: 3000, reverse: true }).catch(() => {});
-    await browser.pause(600);
+    await browser.pause(600); // intentional stabilization: calendar close settle — allow app to process OK and return
   }
 
   // Taps "Yes, continue" if the date-confirmation dialog is currently visible.
@@ -251,7 +254,7 @@ export class FinancialRulesPage extends BasePage {
       .catch(() => false);
     if (exists) {
       await this.tapElement(await $('android=new UiSelector().text("Yes, continue")'));
-      await browser.pause(afterPause);
+      await browser.pause(afterPause); // intentional stabilization: parameterized dialog close settle
     }
   }
 
@@ -259,7 +262,7 @@ export class FinancialRulesPage extends BasePage {
   // confirmation dialogs (start-date confirm, day-of-week mismatch) along the way.
   private async waitForChecklistAfterSave(): Promise<void> {
     for (let i = 0; i < 15; i++) {
-      await browser.pause(800);
+      await browser.pause(800); // intentional stabilization: polling loop interval — waitForChecklistAfterSave rhythm
       if (await this.isDisplayed(s('tv_ok'))) await this.waitAndTap(s('tv_ok'));
       await this.dismissYesContinueIfPresent(400, 500);
       const confirmExists = await $(s('tv_dialog_confirm_start_date_desc'))
@@ -269,7 +272,7 @@ export class FinancialRulesPage extends BasePage {
         if (await $(s('btn_ok')).waitForExist({ timeout: 2000 }).catch(() => false)) {
           await this.waitAndTap(s('btn_ok'), 3000);
         }
-        await browser.pause(500);
+        await browser.pause(500); // intentional stabilization: post-dialog dismiss settle inside poll iteration
       } else {
         if (await $(s('btn_ok')).waitForExist({ timeout: 400 }).catch(() => false)) {
           await this.waitAndTap(s('btn_ok'));

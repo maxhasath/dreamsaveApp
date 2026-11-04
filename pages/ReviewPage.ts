@@ -27,9 +27,9 @@ export class ReviewPage extends BasePage {
     // Reset outer page to top.
     for (let i = 0; i < 4; i++) {
       await this.scrollUp(400, 1900);
-      await browser.pause(200); // scroll loop momentum settle
+      await browser.pause(200); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
-    await browser.pause(400); // page settle before first getPageSource() read
+    await browser.pause(400); // intentional stabilization: page settle before getPageSource() — avoids mid-animation XML
     // Use getPageSource() XML parsing instead of findElements — bypasses UIAutomator2's
     // visibility filter which silently drops RecyclerView rows that are partially off-screen.
     // Accumulate names from each scroll position so recycled views are counted only once.
@@ -44,14 +44,14 @@ export class ReviewPage extends BasePage {
       }
       if (seenNames.size >= 6) break;
       await this.scrollDown(400, 1900, 0.2);
-      await browser.pause(400); // scroll loop momentum settle
+      await browser.pause(400); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
     // Scroll back to top so tv_loan_fund / tv_social_fund remain accessible.
     for (let i = 0; i < 5; i++) {
       await this.scrollUp(400, 1900, 1.0);
-      await browser.pause(200); // scroll loop momentum settle
+      await browser.pause(200); // intentional stabilization: scroll gesture momentum — no UIAutomator2 end signal
     }
-    await browser.pause(400); // page settle before returning member count
+    await browser.pause(400); // intentional stabilization: page settle — ensures RecyclerView is fully rendered
     return String(seenNames.size);
   }
 
@@ -71,7 +71,7 @@ export class ReviewPage extends BasePage {
     // ScrollView — not the inner RecyclerView — handles each scroll step.
     for (let i = 0; i < 10; i++) {
       await this.scrollDown(400, 800);
-      await browser.pause(700); // scroll momentum settle before getPageSource() poll for btn_confirm
+      await browser.pause(700); // intentional stabilization: scroll momentum settle before getPageSource() poll
       const source = await this.getPageSource();
       if (source.includes(':id/btn_confirm')) break;
     }

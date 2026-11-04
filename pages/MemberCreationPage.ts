@@ -56,7 +56,7 @@ export class MemberCreationPage extends BasePage {
     const firstTimeEl = await $(byText('btn_radio', 'First Time User'));
     await firstTimeEl.waitForExist({ timeout: 5000 });
     await this.tapElement(firstTimeEl);
-    await browser.pause(400); // radio selection state: brief UI settle
+    await this.waitForCheckedState(firstTimeEl);
     await this.waitAndTap(s('btn_next'), 8000);
   }
 
@@ -82,7 +82,7 @@ export class MemberCreationPage extends BasePage {
       `.scrollIntoView(new UiSelector().resourceId("${APP_PKG}:id/tv_value_item").text("${member.maritalStatus}"))`,
     );
     await this.tapElement(maritalEl);
-    await browser.pause(400); // UiScrollable scroll momentum settle
+    await browser.pause(400); // intentional stabilization: UiScrollable scroll momentum — no deterministic end signal
 
     const educationLabel = EDUCATION_MAP[member.educationLevel] ?? member.educationLevel;
     const eduEl = await $(
@@ -93,9 +93,8 @@ export class MemberCreationPage extends BasePage {
 
     // Birth date: opens a system scroll-wheel dialog. Dismiss it immediately with OK.
     await this.waitAndTap(s('view_birth_date'));
-    await browser.pause(800); // dialog open: system date picker may take a moment to animate in
     const okBtn = await $('android=new UiSelector().text("OK")');
-    if (await okBtn.waitForExist({ timeout: 4000 }).then(() => true).catch(() => false)) {
+    if (await okBtn.waitForExist({ timeout: 5000 }).then(() => true).catch(() => false)) {
       await this.tapElement(okBtn);
     }
     await this.waitAndTap(s('btn_next'));
@@ -137,12 +136,12 @@ export class MemberCreationPage extends BasePage {
     try {
       await $(s('scr_member_view')).waitForExist({ timeout: 10000 });
     } catch { /* proceed */ }
-    await browser.pause(400); // UiScrollable preparation: scroll container needs to settle
+    await browser.pause(400); // intentional stabilization: UiScrollable container needs to settle before scrollToEnd
 
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* already at end or not scrollable */ }
-    await browser.pause(400); // UiScrollable scroll momentum settle
+    await browser.pause(400); // intentional stabilization: UiScrollable scroll momentum — no deterministic end signal
 
     // btn_next is clickable:false — use scrollIntoViewAndTap which calls tapElement internally.
     await this.scrollIntoViewAndTap('btn_next');
@@ -161,19 +160,19 @@ export class MemberCreationPage extends BasePage {
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* not scrollable or already at end */ }
-    await browser.pause(400); // UiScrollable scroll momentum settle
+    await browser.pause(400); // intentional stabilization: UiScrollable scroll momentum — no deterministic end signal
 
     // rd_yes centre may overlap the nav bar — tapElement handles the nav-bar-safe nudge.
     const rdYesEl = await $(s('rd_yes'));
     await rdYesEl.waitForDisplayed({ timeout: 15000 });
     await this.tapElement(rdYesEl);
-    await browser.pause(700); // radio selection state: settle before next scroll
+    await this.waitForCheckedState(rdYesEl);
 
     // Scroll to end to reveal cb_agreement and btn_create.
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true).resourceId("${APP_PKG}:id/scr_member_view")).scrollToEnd(5)`);
     } catch { /* already at end */ }
-    await browser.pause(400); // UiScrollable scroll momentum settle
+    await browser.pause(400); // intentional stabilization: UiScrollable scroll momentum — no deterministic end signal
 
     const cbEl = await $(s('cb_agreement'));
     await cbEl.waitForDisplayed({ timeout: 10000 });
@@ -183,7 +182,7 @@ export class MemberCreationPage extends BasePage {
     if (alreadyChecked !== 'true') {
       await this.tapElement(cbEl);
     }
-    await browser.pause(400); // checkbox state settle: allow UI to reflect new checked state
+    await this.waitForCheckedState(cbEl);
 
     const createEl = await $(s('btn_create'));
     await createEl.waitForDisplayed({ timeout: 10000 });
@@ -203,7 +202,7 @@ export class MemberCreationPage extends BasePage {
     try {
       await $(`android=new UiScrollable(new UiSelector().scrollable(true)).scrollToEnd(5)`);
     } catch { /* already at end */ }
-    await browser.pause(500); // UiScrollable scroll momentum settle
+    await browser.pause(500); // intentional stabilization: UiScrollable scroll momentum — no deterministic end signal
 
     // btn_proceed (Done) — tapElement is nav-bar-safe and handles clickable:false.
     const doneEl = await $(s('btn_proceed'));
