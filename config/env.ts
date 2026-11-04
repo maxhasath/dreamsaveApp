@@ -1,6 +1,6 @@
 import path from 'path';
 
-export type EnvName = 'dev' | 'stage' | 'prod';
+export type EnvName = 'dev' | 'stage' | 'qa' | 'prod';
 
 interface EnvConfig {
   appPkg:  string;
@@ -15,6 +15,10 @@ const CONFIGS: Record<EnvName, EnvConfig> = {
   stage: {
     appPkg:  'com.dreamstartlabs.dreamsave.staging.beta',
     appPath: path.resolve(__dirname, '..', 'apps', 'dreamsave-staging.apk'),
+  },
+  qa: {
+    appPkg:  'com.dreamstartlabs.dreamsave.qa.beta',
+    appPath: path.resolve(__dirname, '..', 'apps', 'dreamsave-qa.apk'),
   },
   prod: {
     appPkg:  'com.dreamstartlabs.dreamsave',
