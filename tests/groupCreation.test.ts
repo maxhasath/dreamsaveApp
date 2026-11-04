@@ -54,7 +54,7 @@ describe('DreamSave — Group Creation Flow', () => {
 
   // ─── Step 2: Group Initialization ────────────────────────────────────────────
 
-  it('Step 2 — creates a new group with name "Agent" as a Real Group in Zambia', async () => {
+  it(`Step 2 — creates a new group "${testData.group.name}" as a Real Group in Zambia`, async () => {
     await groupSetup.tapCreateNewGroup();
     await groupSetup.selectFirstAvailableLogo();
     await groupSetup.enterGroupName(testData.group.name);
@@ -113,7 +113,7 @@ describe('DreamSave — Group Creation Flow', () => {
   // ─── Step 6: Member Creation (6 members) ─────────────────────────────────────
 
   for (const [index, member] of testData.members.entries()) {
-    it(`Step 6 — creates member ${index + 1} of 6: ${member.firstName} ${member.lastName}`, async () => {
+    it(`Step 6 — creates member ${index + 1} of ${testData.members.length}: ${member.firstName} ${member.lastName}`, async () => {
       await memberCreation.createFullMemberProfile(member);
       // Each member: 5 shares × 2,000 ZMW/share = 10,000 ZMW individual savings
     });

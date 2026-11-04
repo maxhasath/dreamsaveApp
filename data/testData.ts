@@ -1,12 +1,6 @@
 // Test data derived strictly from Workflow_Steps.md (gemini-code-1792916146057.md).
 // Do not add or change values here without cross-referencing the source-of-truth file.
 
-const VILLAGE_NAMES = [
-  'Sunrise', 'Riverside', 'Mango', 'Baobab', 'Harmony',
-  'Meadow', 'Savanna', 'Copper', 'Maize', 'Unity',
-  'Kafue', 'Lusaka', 'Kitwe', 'Ndola', 'Chipata',
-];
-
 const FEMALE_FIRST_NAMES = [
   'Amara', 'Chisomo', 'Dalitso', 'Esther', 'Fatuma',
   'Grace', 'Hannah', 'Ivy', 'Joyce', 'Lena',
@@ -25,16 +19,15 @@ function pickUnique<T>(pool: T[], count: number): T[] {
 }
 
 function generateGroupName(): string {
-  const name = VILLAGE_NAMES[Math.floor(Math.random() * VILLAGE_NAMES.length)];
-  return `Village ${name}`;
+  return `Agent_${Date.now().toString().slice(-5)}`;
 }
 
 // Generates 6 unique name pairs. Gender pattern: Female, Male, Female, Male, Female, Male.
 // Matches the gender field assigned to each member slot in the members array below.
 function generateMemberNames(): Array<{ firstName: string; lastName: string }> {
-  const femaleFirsts = pickUnique(FEMALE_FIRST_NAMES, 3);
-  const maleFirsts   = pickUnique(MALE_FIRST_NAMES, 3);
-  const lasts        = pickUnique(LAST_NAMES, 6);
+  const femaleFirsts = pickUnique(FEMALE_FIRST_NAMES, 4);
+  const maleFirsts   = pickUnique(MALE_FIRST_NAMES, 4);
+  const lasts        = pickUnique(LAST_NAMES, 8);
   return [
     { firstName: femaleFirsts[0], lastName: lasts[0] },
     { firstName: maleFirsts[0],   lastName: lasts[1] },
@@ -42,6 +35,8 @@ function generateMemberNames(): Array<{ firstName: string; lastName: string }> {
     { firstName: maleFirsts[1],   lastName: lasts[3] },
     { firstName: femaleFirsts[2], lastName: lasts[4] },
     { firstName: maleFirsts[2],   lastName: lasts[5] },
+    { firstName: femaleFirsts[3], lastName: lasts[6] },
+    { firstName: maleFirsts[3],   lastName: lasts[7] },
   ];
 }
 
@@ -151,7 +146,7 @@ export const testData = {
     meetingDay, // dynamically set to today's day of week — always matches startDate/shareOutDate
   },
 
-  // Six members with 5 shares each = 10,000 ZMW individual savings (5 × 2,000 ZMW).
+  // Eight members with 5 shares each = 10,000 ZMW individual savings (5 × 2,000 ZMW).
   // Names are randomly generated on each run; all other data is fixed.
   members: [
     {
@@ -239,6 +234,34 @@ export const testData = {
       adultsInFamily: '3',
       dependents: '2',
       mobileNumber: '0971000006',
+      passcode: '11111',
+      shares: 5,
+      savingsGoal: { category: 'Business', targetAmount: '50000' },
+    },
+    {
+      firstName: names[6].firstName,
+      lastName:  names[6].lastName,
+      gender: 'Female',
+      maritalStatus: 'Single',
+      educationLevel: 'Tertiary',
+      dateOfBirth: '14/02/1993',
+      adultsInFamily: '1',
+      dependents: '0',
+      mobileNumber: '0971000007',
+      passcode: '11111',
+      shares: 5,
+      savingsGoal: { category: 'Education', targetAmount: '50000' },
+    },
+    {
+      firstName: names[7].firstName,
+      lastName:  names[7].lastName,
+      gender: 'Male',
+      maritalStatus: 'Married',
+      educationLevel: 'Secondary',
+      dateOfBirth: '22/08/1979',
+      adultsInFamily: '3',
+      dependents: '2',
+      mobileNumber: '0971000008',
       passcode: '11111',
       shares: 5,
       savingsGoal: { category: 'Business', targetAmount: '50000' },
