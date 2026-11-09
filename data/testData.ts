@@ -278,3 +278,39 @@ export const testData = {
 
   bookkeeperMemberIndex: 0, // member 1 is the bookkeeper
 };
+
+// ─── Login flow data ──────────────────────────────────────────────────────────
+
+export const loginData = {
+  country:     'Zambia',
+  groupName:   'Village Sunrise',
+  groupNumber: 'ZM-905-077',
+  member1: { dreamId: '500195228', passcode: '11111' },
+  member2: { dreamId: '500195231', passcode: '11111' },
+  member3: { dreamId: '500195233', passcode: '11111' },
+};
+
+// ─── Meeting flow data ────────────────────────────────────────────────────────
+
+export interface MemberSavings {
+  shares:        string;
+  socialPayment: string;
+}
+
+export const meetingData = {
+  members: ['Alice Banda', 'Brian Mwale', 'Carol Phiri', 'David Zulu', 'Eve Lungu', 'Frank Mutale'],
+  savings: {
+    'Alice Banda': { shares: '5', socialPayment: '500' },
+    'Brian Mwale': { shares: '2', socialPayment: '100' },
+  } as Record<string, MemberSavings>,
+  newLoan: {
+    member:  'Alice Banda',
+    amount:  '20000',
+    term:    '2-Months (10%)',
+    purpose: 'Agriculture',
+  },
+  loanRepayment: {
+    member: 'Alice Banda',
+    amount: '1000',
+  },
+};
