@@ -63,7 +63,7 @@ describe(`DreamSave — Meeting Flow (${loginData.groupName})`, () => {
 
   it('Step 5 — fines a random member and records the full fine payment', async () => {
     const fine = await fines.doFines(meetingData.fine);
-    fineAmount = fine.newFine;
+    fineAmount = fine.paid; // cash collected: the new fine plus any earlier balance;
     expect(meetingData.members).toContain(fine.member);
     expect(fine.totalDue).toBeGreaterThanOrEqual(fine.newFine);
     expect(fine.paid).toBe(fine.totalDue);

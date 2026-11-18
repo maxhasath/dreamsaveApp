@@ -62,24 +62,31 @@ export class MeetingPage extends MeetingBasePage {
 
   // ─── Step 2: Attendance ─────────────────────────────────────────────────────
 
+  // Members default to Present; only un-checked rows need a tap. The list is a RecyclerView
+  // (only visible rows exist), so scroll through it, then return to the top.
+  private async markAllPresent(): Promise<void> {
+    for (let pass = 0; pass < 4; pass++) {
+      for (const radio of await $$(s('rd_attend'))) {
+        if ((await radio.getAttribute('checked')) !== 'true') {
+          await this.tapElement(radio);
+          await this.waitForCheckedState(radio);
+        }
+      }
+      await this.swipeList('down');
+    }
+    await this.swipeList('up', 4);
+  }
+
   async doAttendance(): Promise<number> {
     await this.tapMenuItem('Attendance');
     await this.waitForElement(s('rcv_member_attendance'), 15000);
-
-    // Members default to Present; only un-checked rows need a tap.
-    let present = 0;
-    for (const radio of await $$(s('rd_attend'))) {
-      if ((await radio.getAttribute('checked')) !== 'true') {
-        await this.tapElement(radio);
-        await this.waitForCheckedState(radio);
-      }
-      present++;
-    }
+    const members = await this.readAllTexts(s('tv_member_name'));
+    await this.markAllPresent();
 
     await this.scrollToAndTap(s('btn_done'));
     await this.dismissAwardDialogs();
     await this.waitForMenu();
-    return present;
+    return members.length;
   }
 
   // ─── Step 3: Opening Summary ─────────────────────────────────────────────────

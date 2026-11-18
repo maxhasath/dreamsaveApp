@@ -62,10 +62,22 @@ export class MeetingBasePage extends BasePage {
     return y + height <= (await navBar.getLocation()).y;
   }
 
+  private async topOf(selector: string): Promise<number | null> {
+    const el = await $(selector);
+    return (await el.isExisting().catch(() => false)) ? (await el.getLocation()).y : null;
+  }
+
   protected async scrollTo(selector: string, maxSwipes = 10): Promise<boolean> {
     for (let i = 0; i < maxSwipes; i++) {
       if (await this.waitForOptionalElement(selector, 1000) && await this.isClearOfNavBar(selector)) return true;
+      const before = await this.topOf(selector);
       await this.swipeList('down');
+      // scrollGesture finds no scrollable on some taller pages (e.g. Attendance with 8 members),
+      // leaving the target under the nav bar. If it did not move, swipe the page with a finger.
+      if (before !== null && before === await this.topOf(selector)) {
+        await driver.execute('mobile: swipeGesture', { left: 100, top: 400, width: 880, height: 1200, direction: 'up', percent: 0.5 });
+        await browser.pause(300); // intentional stabilization: swipe momentum — no UIAutomator2 end signal
+      }
     }
     return this.isClearOfNavBar(selector);
   }
