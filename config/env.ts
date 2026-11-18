@@ -22,7 +22,7 @@ const CONFIGS: Record<EnvName, EnvConfig> = {
   },
   prod: {
     appPkg:  'com.dreamstartlabs.dreamsave',
-    appPath: path.resolve(__dirname, '..', 'apps', 'dreamsave-prod.apk'),
+    appPath: path.resolve(__dirname, '..', 'apps', 'dreamsave_prod.apk'),
   },
 };
 

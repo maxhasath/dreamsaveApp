@@ -18,6 +18,40 @@ function pickUnique<T>(pool: T[], count: number): T[] {
   return [...pool].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
+// ─── Reproducible randomness for runtime choices ──────────────────────────────
+// Members, fine reasons and repayment amounts are chosen at run time. They all draw from one
+// seeded generator and are logged, so a failing run can be replayed exactly:
+//   $env:TEST_SEED = "123456"; npm run test:meeting-flow
+export const RANDOM_SEED: number = process.env.TEST_SEED
+  ? Number(process.env.TEST_SEED)
+  : Math.floor(Math.random() * 1_000_000_000);
+
+let rngState = RANDOM_SEED >>> 0;
+function random(): number { // mulberry32
+  rngState = (rngState + 0x6D2B79F5) >>> 0;
+  let x = rngState;
+  x = Math.imul(x ^ (x >>> 15), x | 1);
+  x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+  return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+}
+
+// Integer in [min, max], inclusive.
+export function randomInt(min: number, max: number): number {
+  return min + Math.floor(random() * (max - min + 1));
+}
+
+// Returns `count` distinct items chosen at random; the choice is logged under `label`.
+export function pickRandom<T>(pool: T[], count: number, label?: string): T[] {
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = randomInt(0, i);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const picked = shuffled.slice(0, count);
+  if (label) console.log(`[random] ${label}: ${JSON.stringify(picked)} (from ${pool.length})`);
+  return picked;
+}
+
 function generateGroupName(): string {
   return `Agent_${Date.now().toString().slice(-5)}`;
 }
@@ -281,13 +315,17 @@ export const testData = {
 
 // ─── Login flow data ──────────────────────────────────────────────────────────
 
+// Stage test credentials are the defaults; set the DS_* variables to override them
+// (e.g. from CI secrets) without touching the code.
+const fromEnv = (name: string, fallback: string): string => process.env[name] ?? fallback;
+
 export const loginData = {
   country:     'Zambia',
   groupName:   'Village Sunrise',
   groupNumber: 'ZM-905-077',
-  member1: { dreamId: '500195228', passcode: '11111' },
-  member2: { dreamId: '500195231', passcode: '11111' },
-  member3: { dreamId: '500195233', passcode: '11111' },
+  member1: { dreamId: fromEnv('DS_MEMBER1_DREAM_ID', '500195228'), passcode: fromEnv('DS_MEMBER1_PASSCODE', '11111') },
+  member2: { dreamId: fromEnv('DS_MEMBER2_DREAM_ID', '500195231'), passcode: fromEnv('DS_MEMBER2_PASSCODE', '11111') },
+  member3: { dreamId: fromEnv('DS_MEMBER3_DREAM_ID', '500195233'), passcode: fromEnv('DS_MEMBER3_PASSCODE', '11111') },
 };
 
 // ─── Meeting flow data ────────────────────────────────────────────────────────
@@ -299,18 +337,19 @@ export interface MemberSavings {
 
 export const meetingData = {
   members: ['Alice Banda', 'Brian Mwale', 'Carol Phiri', 'David Zulu', 'Eve Lungu', 'Frank Mutale'],
-  savings: {
-    'Alice Banda': { shares: '5', socialPayment: '500' },
-    'Brian Mwale': { shares: '2', socialPayment: '100' },
-  } as Record<string, MemberSavings>,
+  chairperson: 'Alice Banda',
+  sharePrice: 2000, // ZMW per share — fixed in the Village Sunrise constitution
+  // Two randomly chosen members each get one of these entries.
+  savings: [
+    { shares: '5', socialPayment: '500' },
+    { shares: '2', socialPayment: '100' },
+  ] as MemberSavings[],
+  fine: { amount: '100' }, // ZMW, paid in full the same day
+  // No borrower here: members with an outstanding loan are ineligible, so the
+  // borrower is picked from the Eligible Members list at run time.
   newLoan: {
-    member:  'Alice Banda',
     amount:  '20000',
     term:    '2-Months (10%)',
     purpose: 'Agriculture',
-  },
-  loanRepayment: {
-    member: 'Alice Banda',
-    amount: '1000',
   },
 };

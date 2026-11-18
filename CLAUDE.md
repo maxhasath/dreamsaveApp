@@ -150,22 +150,26 @@ DreamSave_Project/
 ├── config/
 │   └── env.ts          # All environment config — the ONLY place for pkg names / APK paths
 ├── data/
-│   └── testData.ts     # Dynamic test data generation
+│   ├── testData.ts     # 8-member group, login and meeting data; seeded random helpers (pickRandom/randomInt)
+│   └── testData6.ts    # 6-member group-creation data
 ├── pages/
-│   ├── BasePage.ts     # Shared wait/interaction utilities — extend this in every page object
-│   ├── WelcomePage.ts
-│   ├── PermissionsPage.ts
-│   ├── GroupSetupPage.ts
-│   ├── PartnerPage.ts
-│   ├── CycleConfigPage.ts
-│   ├── FinancialRulesPage.ts
-│   ├── MemberCreationPage.ts
-│   ├── OfficerElectionPage.ts
-│   ├── ReviewPage.ts
-│   └── BackupPage.ts
+│   ├── BasePage.ts            # Shared wait/interaction utilities — extend this in every page object
+│   ├── WelcomePage.ts, PermissionsPage.ts, GroupSetupPage.ts, PartnerPage.ts, CycleConfigPage.ts,
+│   │   FinancialRulesPage.ts, MemberCreationPage.ts, OfficerElectionPage.ts, ReviewPage.ts, BackupPage.ts
+│   ├── LoginPage.ts           # Group Login + ensureLoggedIn
+│   ├── MeetingBasePage.ts     # Shared meeting helpers: menu, scrolling (swipeList), enterDigits, signatures, award dialogs
+│   ├── MeetingPage.ts         # Meetings tab, start, Attendance, Opening/Closing Summary, Back up & End
+│   ├── SavingsPage.ts         # Savings
+│   ├── FinesPage.ts           # Fines
+│   ├── NewLoanPage.ts         # New Loans
+│   └── LoanRepaymentPage.ts   # Loan Repayments
 ├── tests/
-│   └── groupCreation.test.ts
-├── wdio.conf.ts        # WDIO + Appium runner config (reads from config/env.ts)
+│   ├── groupCreation.test.ts   # 8-member group creation (do not change without being asked)
+│   ├── groupCreation6.test.ts  # 6-member group creation
+│   ├── groupLogin.spec.ts      # Group Login flow
+│   └── meetingFlow.spec.ts     # 10-step meeting flow (runs Group Login first)
+├── wdio.conf.ts         # WDIO + Appium runner config (reads from config/env.ts)
+├── wdio.meeting.conf.ts # Extends wdio.conf.ts: *.spec.ts specs, bail, screenshot + page-source on failure
 ├── tsconfig.json
 └── package.json
 ```
@@ -188,3 +192,26 @@ npm run tsc:check
 
 Appium server starts and stops automatically via `@wdio/appium-service`.
 Failure screenshots are saved to `screenshots/` (gitignored) via the `afterTest` hook in `wdio.conf.ts`.
+
+### Per-suite commands
+```bash
+npm run test:group-creation-8   # 8-member group creation
+npm run test:group-creation-6   # 6-member group creation
+npm run test:group-login        # Group Login
+npm run test:meeting-flow       # Meeting flow (clears app data, logs in, runs 10 steps)
+```
+
+---
+
+## 6. Runtime Randomness — Reproducible by Design
+
+Members, fine reasons and repayment amounts are chosen at run time, so every random choice must go
+through `pickRandom` / `randomInt` in `data/testData.ts` (never `Math.random()` in pages or specs).
+They draw from one seeded generator and log `[random] <label>: ...`; the seed is printed at the start
+of a run. Replay a failing run exactly with:
+```bash
+$env:TEST_SEED = "123456"; npm run test:meeting-flow   # PowerShell
+TEST_SEED=123456 npm run test:meeting-flow              # Bash / CI
+```
+Stage login credentials default to the stage test group; override with `DS_MEMBER<1-3>_DREAM_ID` / `DS_MEMBER<1-3>_PASSCODE`.
+Locators for the Meetings tab and menu items are English text (those views have no resource-ids).

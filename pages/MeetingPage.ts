@@ -1,0 +1,151 @@
+import { s, byText } from './BasePage';
+import { MeetingBasePage, MEETINGS_TAB } from './MeetingBasePage';
+
+const ALLOW_LOCATION = 'id:com.android.permissioncontroller:id/permission_allow_foreground_only_button';
+const SEND_SMS       = 'android=new UiSelector().className("android.widget.Button").textMatches("(?i)send.*")';
+
+export interface OpeningBalances { funds: number[]; total: number; }
+export interface ClosingSummary {
+  startingBalance: number; newSavings: number; loanRepayments: number;
+  newLoans: number; fines: number; endBalance: number; signer: string;
+}
+export interface EndMeetingResult { backupTitle: string; completedMeeting: string; }
+
+// Meeting lifecycle screens: Meetings tab, start, Attendance, Opening Summary,
+// Closing Summary and Back up / End. Savings, Fines and the loan screens have their own pages.
+export class MeetingPage extends MeetingBasePage {
+
+  // ─── Meetings tab ───────────────────────────────────────────────────────────
+
+  async getMeetingsCompletedCount(): Promise<number> {
+    await this.waitAndTap(MEETINGS_TAB, 10000);
+    return this.readNumber(s('tv_meeting_completed'));
+  }
+
+  // ─── Step 1: Start Meeting ───────────────────────────────────────────────────
+
+  // Returns the meeting title and how many meetings were completed before it.
+  async startMeeting(): Promise<{ title: string; completedBefore: number }> {
+    // With a meeting in progress, a cold start opens directly on its menu (no tabs),
+    // so the completed count is derived from the meeting number instead of the tab.
+    if (await this.waitForOptionalElement(s('rcv_meeting_menu'), 3000)) {
+      const resumedTitle = await (await this.waitForElement(s('tv_title'))).getText();
+      return { title: resumedTitle, completedBefore: this.toNumber(resumedTitle) - 1 };
+    }
+    const completedBefore = await this.getMeetingsCompletedCount();
+    await this.waitAndTap(s('btn_start'), 10000);
+    await this.passStartPrompts();
+    const title = await (await this.waitForElement(s('tv_title'))).getText();
+    return { title, completedBefore };
+  }
+
+  // Between the tab and the meeting menu the app may show, depending on state:
+  //   - "Welcome to Meeting N" → Start Now! (absent when resuming a meeting in progress)
+  //   - "Are you sure?" → YES (starting sooner than the weekly schedule)
+  //   - location permission (first meeting after a fresh login)
+  private async passStartPrompts(): Promise<void> {
+    const prompts = [s('btn_start_meeting'), byText('btn_ok', 'YES'), ALLOW_LOCATION];
+    await browser.waitUntil(
+      async () => {
+        if (await this.isDisplayed(s('rcv_meeting_menu'))) return true;
+        for (const prompt of prompts) {
+          if (await this.isDisplayed(prompt)) {
+            await this.waitAndTap(prompt);
+            break;
+          }
+        }
+        return false;
+      },
+      { timeout: 30000, interval: 500 },
+    );
+  }
+
+  // ─── Step 2: Attendance ─────────────────────────────────────────────────────
+
+  async doAttendance(): Promise<number> {
+    await this.tapMenuItem('Attendance');
+    await this.waitForElement(s('rcv_member_attendance'), 15000);
+
+    // Members default to Present; only un-checked rows need a tap.
+    let present = 0;
+    for (const radio of await $$(s('rd_attend'))) {
+      if ((await radio.getAttribute('checked')) !== 'true') {
+        await this.tapElement(radio);
+        await this.waitForCheckedState(radio);
+      }
+      present++;
+    }
+
+    await this.scrollToAndTap(s('btn_done'));
+    await this.dismissAwardDialogs();
+    await this.waitForMenu();
+    return present;
+  }
+
+  // ─── Step 3: Opening Summary ─────────────────────────────────────────────────
+
+  async doOpeningSummary(): Promise<OpeningBalances> {
+    await this.tapMenuItem('Opening Summary');
+    const total = await this.readNumber(s('tv_total_fund'));
+    const funds = await this.readNumbers(s('tv_fund_amount'));
+
+    await this.scrollToAndTap(s('btn_verify'));
+    // "Verify Opening Balance" confirmation dialog
+    await this.waitAndTap(s('btn_ok'), 10000);
+    await this.waitForMenu();
+    return { funds, total };
+  }
+
+  // ─── Step 8: Closing Summary ─────────────────────────────────────────────────
+
+  async doClosingSummary(): Promise<ClosingSummary> {
+    await this.tapMenuItem('Closing Summary');
+    const figures = {
+      startingBalance: await this.readNumber(s('tv_loan_fund_starting_balance')),
+      newSavings:      await this.readNumber(s('tv_loan_fund_new_savings')),
+      loanRepayments:  await this.readNumber(s('tv_loan_repayments')),
+      newLoans:        await this.readNumber(s('tv_new_loans')),
+      fines:           await this.readNumber(s('tv_fines')),
+      endBalance:      await this.readNumber(s('tv_loan_fund_end_balance')),
+    };
+
+    // The signing-officer row opens the signature screen.
+    await this.scrollTo(s('view_officer_selected'));
+    const signerEl = await this.waitForElement(s('tv_signer_name'));
+    const signer   = await signerEl.getText();
+    await this.waitAndTap(s('view_officer_selected'), 10000);
+    await this.signAndConfirm();
+
+    await this.scrollToAndTap(s('btn_verify'));
+    await this.waitForMenu();
+    return { ...figures, signer };
+  }
+
+  // ─── Step 9: Back Up and End Meeting ─────────────────────────────────────────
+
+  async endMeeting(): Promise<EndMeetingResult> {
+    await this.waitForMenu();
+    await this.scrollToAndTap(s('btn_end_meeting'));
+    // "Please Confirm" → YES
+    await this.waitAndTap(s('btn_ok'), 10000);
+    // SMS-receipt prompt — shown only when the group has SMS receipts to send.
+    if (await this.waitForOptionalElement(SEND_SMS, 3000)) {
+      await this.waitAndTap(SEND_SMS);
+    }
+
+    await this.waitAndTap(s('btn_backup_now'), 15000);
+    // Upload time depends on the network; btn_continue appears on the success screen.
+    await this.waitForElement(s('btn_continue'), 120000);
+    const backupTitleEl = await this.waitForElement(s('tv_title_hot_streak'));
+    const backupTitle   = await backupTitleEl.getText();
+    await this.waitAndTap(s('btn_continue'));
+
+    // "Congratulations! <Group> — Meeting N is now completed"
+    const meetingNameEl    = await this.waitForElement(s('tv_meeting_name'), 15000);
+    const completedMeeting = await meetingNameEl.getText();
+    await this.waitAndTap(s('tv_name_button'), 10000);
+    // Lands on the group home — Dashboard or Meetings tab, depending on where the session began.
+    await this.waitForElement(MEETINGS_TAB, 15000);
+    return { backupTitle, completedMeeting };
+  }
+}

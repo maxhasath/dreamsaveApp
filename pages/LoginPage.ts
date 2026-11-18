@@ -54,7 +54,12 @@ export class LoginPage extends BasePage {
       if (await this.waitForOptionalElement(byText('tv_item_name', country), 1000)) break;
       await this.scrollDown(400, 1200, 0.8);
     }
-    await this.waitAndTap(byText('tv_item_name', country), 5000);
+    // The first tap can be swallowed while the list is still settling from its scroll;
+    // the dropdown then stays open, so tap the country again until Start appears.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.waitAndTap(byText('tv_item_name', country), 5000);
+      if (await this.waitForOptionalElement(s('btn_start_app'), 3000)) break;
+    }
     await this.waitAndTap(s('btn_start_app'), 5000);
     // "Is <COUNTRY> the correct country selection?" confirmation dialog
     if (await this.waitForOptionalElement(s('btn_ok'), 6000)) {
@@ -83,25 +88,22 @@ export class LoginPage extends BasePage {
 
   async tapGroupLogin(): Promise<void> {
     // Welcome screen → "Already have an account? Log in"  (resource-id: tv_login)
-    await this.waitAndTap(s('tv_login'), 15000);
+    // Absent when the app already shows the login-type selection (logged-out cold start).
+    if (await this.waitForOptionalElement(s('tv_login'), 8000)) {
+      await this.waitAndTap(s('tv_login'));
+    }
     // Login-type selection → "Group Login"  (resource-id: btn_group_login)
     await this.waitAndTap(s('btn_group_login'), 10000);
   }
 
-  // Fills one member credential slot on the Group Login screen.
-  // Uses the slot's unique container resource-id (view_first/second/third_login_credential)
-  // to scroll the whole slot into view before each field access, so the passCode lookup
-  // always starts from a known scroll position regardless of keyboard-induced shifts.
-  async enterCredentialSlot(slot: number, dreamId: string, passcode: string): Promise<void> {
-    const container = SLOT_CONTAINERS[slot - 1];
-
-    // Scroll the slot's container into view, then tap the Dream ID radio inside it.
+  // Scrolls the slot's container into view, taps the Dream ID radio inside it, then injects
+  // the ID via ADB shell — the field auto-formats hyphens (500-195-228) on text change,
+  // so raw digits work.
+  private async fillDreamId(container: string, dreamId: string): Promise<void> {
     await $(scrollToSlot(container));
     const rdEl = await $(childOf(container, 'rb_dream_id'));
     await this.tapElement(rdEl);
 
-    // Focus the ID input and inject digits via ADB shell —
-    // the field auto-formats hyphens (500-195-228) on text change, so raw digits work.
     const idEl = await $(childOf(container, 'edt_phone_or_dream_id'));
     await this.tapElement(idEl); // use nav-bar-safe tap — Dream ID inputs for lower slots fall below navBarY
     await browser.pause(300); // intentional stabilization: focus settle before ADB shell text injection
@@ -109,10 +111,12 @@ export class LoginPage extends BasePage {
     await this.hideKeyboard();
     await this.waitForKeyboardClosed();
     await browser.pause(400); // intentional stabilization: ScrollView reflow settle after keyboard dismiss
+  }
 
-    // UiScrollable.scrollIntoView() only scrolls FORWARD (down) from the current position.
-    // After keyboard dismiss the ScrollView may reset to show the form's top, leaving the
-    // passCode row below the viewport. Scroll down (up to 3 passes) until it appears.
+  // UiScrollable.scrollIntoView() only scrolls FORWARD (down) from the current position.
+  // After keyboard dismiss the ScrollView may reset to show the form's top, leaving the
+  // passCode row below the viewport. Scroll down (up to 3 passes) until it appears.
+  private async fillPasscode(container: string, passcode: string): Promise<void> {
     for (let i = 0; i < 3; i++) {
       if (await this.waitForOptionalElement(childOf(container, 'edt_passCode'), 1500)) break;
       await this.scrollDown();
@@ -126,6 +130,15 @@ export class LoginPage extends BasePage {
     await this.hideKeyboard();
     await this.waitForKeyboardClosed();
     await browser.pause(300); // intentional stabilization: keyboard dismiss settle before next slot scroll
+  }
+
+  // Fills one member credential slot on the Group Login screen. Each slot's unique container
+  // resource-id (view_first/second/third_login_credential) anchors every lookup, so the field
+  // search starts from a known scroll position regardless of keyboard-induced shifts.
+  async enterCredentialSlot(slot: number, dreamId: string, passcode: string): Promise<void> {
+    const container = SLOT_CONTAINERS[slot - 1];
+    await this.fillDreamId(container, dreamId);
+    await this.fillPasscode(container, passcode);
   }
 
   async submitLogin(): Promise<void> {
@@ -177,13 +190,22 @@ export class LoginPage extends BasePage {
   }
 
   async ensureLoggedIn(opts: LoginOptions): Promise<void> {
-    if (await this.isDashboardVisible()) return;
+    if (await this.waitForOptionalElement(s('tv_title'), 3000)) return;
+    // A cold start always opens on the country screen, even with a group logged in;
+    // choosing the country then lands directly on the Dashboard.
     await this.selectCountryAndStart(opts.country);
     await this.dismissPermissionsAndModals();
+    if (await this.waitForOptionalElement(s('tv_title'), 10000)) {
+      await this.dismissPermissionsAndModals();
+      return;
+    }
     await this.tapGroupLogin();
     await this.enterCredentialSlot(1, opts.dreamId1, opts.passcode1);
     await this.enterCredentialSlot(2, opts.dreamId2, opts.passcode2);
     await this.enterCredentialSlot(3, opts.dreamId3, opts.passcode3);
     await this.submitLogin();
+    // "Important Note" / permission prompts can still appear over the Dashboard after sync
+    // and would block the tab strip.
+    await this.dismissPermissionsAndModals();
   }
 }
