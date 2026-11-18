@@ -123,6 +123,29 @@ export class MeetingPage extends MeetingBasePage {
 
   // ─── Step 9: Back Up and End Meeting ─────────────────────────────────────────
 
+  // Upload time depends on the network. Groups on a hot streak get "...backed up" (btn_continue);
+  // others get "Success! Meeting N is now saved to the internet" (btn_next).
+  private async confirmBackup(): Promise<string> {
+    const confirmations = [s('tv_title_hot_streak'), s('tv_message')];
+    let shown = '';
+    await browser.waitUntil(async () => {
+      for (const sel of confirmations) {
+        if (await this.isDisplayed(sel)) { shown = sel; return true; }
+      }
+      return false;
+    }, { timeout: 120000, interval: 1000, timeoutMsg: 'backup confirmation did not appear' });
+    return (await this.waitForElement(shown)).getText();
+  }
+
+  // Success / hot-streak screens (each optional) lead to the Congratulations screen.
+  private async advanceToCongratulations(): Promise<void> {
+    for (let i = 0; i < 4 && !(await this.isDisplayed(s('tv_meeting_name'))); i++) {
+      for (const next of [s('btn_continue'), s('btn_next')]) {
+        if (await this.waitForOptionalElement(next, 2000)) { await this.waitAndTap(next); break; }
+      }
+    }
+  }
+
   async endMeeting(): Promise<EndMeetingResult> {
     await this.waitForMenu();
     await this.scrollToAndTap(s('btn_end_meeting'));
@@ -134,11 +157,8 @@ export class MeetingPage extends MeetingBasePage {
     }
 
     await this.waitAndTap(s('btn_backup_now'), 15000);
-    // Upload time depends on the network; btn_continue appears on the success screen.
-    await this.waitForElement(s('btn_continue'), 120000);
-    const backupTitleEl = await this.waitForElement(s('tv_title_hot_streak'));
-    const backupTitle   = await backupTitleEl.getText();
-    await this.waitAndTap(s('btn_continue'));
+    const backupTitle = await this.confirmBackup();
+    await this.advanceToCongratulations();
 
     // "Congratulations! <Group> — Meeting N is now completed"
     const meetingNameEl    = await this.waitForElement(s('tv_meeting_name'), 15000);

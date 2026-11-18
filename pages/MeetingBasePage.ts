@@ -98,6 +98,7 @@ export class MeetingBasePage extends BasePage {
       await this.swipeList('up');
     }
     await this.scrollToAndTap(row);
+    await this.dismissAwardDialogs(1500);
   }
 
   // ─── Meeting menu ───────────────────────────────────────────────────────────
@@ -123,18 +124,30 @@ export class MeetingBasePage extends BasePage {
         async () => !(await this.isDisplayed(s('rcv_meeting_menu'))) || await this.isDisplayed(s('btn_ok')),
         { timeout: 4000, interval: 300 },
       ).catch(() => false);
-      if (opened) return;
+      if (opened) break;
+    }
+    // Conditional full-screen "New Feature!" intros (closed with the X). A btn_ok here is a
+    // confirmation dialog the caller handles, so it is left alone.
+    if (!(await this.isDisplayed(s('btn_ok')))) await this.dismissFeatureIntros();
+  }
+
+  private async dismissFeatureIntros(): Promise<void> {
+    for (let i = 0; i < 3 && await this.waitForOptionalElement(s('view_close'), i === 0 ? 2500 : 1500); i++) {
+      await this.waitAndTap(s('view_close'));
     }
   }
 
   // Goal-achievement / perfect-attendance / early-repayment Dream Star screens — zero or
   // more, depending on the group's history. The close icon is always at the top; btn_ok can
   // sit below a long member list, so it is only the fallback.
-  protected async dismissAwardDialogs(): Promise<void> {
-    for (let i = 0; i < 3; i++) {
+  // Also clears the conditional full-screen intros ("Here it is!" data-sharing / Additional
+  // Funds) that some groups see when opening a step or a member; `waitMs` bounds the check
+  // so the step passes whether or not one appears.
+  protected async dismissAwardDialogs(waitMs = 2500): Promise<void> {
+    for (let i = 0; i < 4; i++) {
       let dismissed = false;
       for (const control of [s('view_close'), s('btn_ok')]) {
-        if (await this.waitForOptionalElement(control, 2500)) {
+        if (await this.waitForOptionalElement(control, waitMs)) {
           await this.waitAndTap(control);
           dismissed = true;
           break;

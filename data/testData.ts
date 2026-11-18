@@ -1,3 +1,5 @@
+import { credentials } from '../config/credentials';
+
 // Test data derived strictly from Workflow_Steps.md (gemini-code-1792916146057.md).
 // Do not add or change values here without cross-referencing the source-of-truth file.
 
@@ -315,18 +317,8 @@ export const testData = {
 
 // ─── Login flow data ──────────────────────────────────────────────────────────
 
-// Stage test credentials are the defaults; set the DS_* variables to override them
-// (e.g. from CI secrets) without touching the code.
-const fromEnv = (name: string, fallback: string): string => process.env[name] ?? fallback;
-
-export const loginData = {
-  country:     'Zambia',
-  groupName:   'Village Sunrise',
-  groupNumber: 'ZM-905-077',
-  member1: { dreamId: fromEnv('DS_MEMBER1_DREAM_ID', '500195228'), passcode: fromEnv('DS_MEMBER1_PASSCODE', '11111') },
-  member2: { dreamId: fromEnv('DS_MEMBER2_DREAM_ID', '500195231'), passcode: fromEnv('DS_MEMBER2_PASSCODE', '11111') },
-  member3: { dreamId: fromEnv('DS_MEMBER3_DREAM_ID', '500195233'), passcode: fromEnv('DS_MEMBER3_PASSCODE', '11111') },
-};
+// Credentials live in config/credentials/<env>.ts and are picked by TEST_ENV.
+export const loginData = credentials;
 
 // ─── Meeting flow data ────────────────────────────────────────────────────────
 
@@ -336,8 +328,8 @@ export interface MemberSavings {
 }
 
 export const meetingData = {
-  members: ['Alice Banda', 'Brian Mwale', 'Carol Phiri', 'David Zulu', 'Eve Lungu', 'Frank Mutale'],
-  chairperson: 'Alice Banda',
+  members:     credentials.members,
+  chairperson: credentials.chairperson,
   sharePrice: 2000, // ZMW per share — fixed in the Village Sunrise constitution
   // Two randomly chosen members each get one of these entries.
   savings: [

@@ -67,11 +67,26 @@ export class LoginPage extends BasePage {
     }
   }
 
+  // "Important Note" dialog and the full-screen "New Feature!" intros that can follow a login
+  // (several in a row). Intros close with view_close; "Important Note" and the permission
+  // intro use btn_ok. An intro's tv_title would otherwise pass for the Dashboard title.
+  private async dismissIntroScreens(firstWaitMs: number): Promise<boolean> {
+    let dismissed = false;
+    for (let i = 0; i < 6; i++) {
+      const wait = i === 0 ? firstWaitMs : 2500;
+      if (await this.waitForOptionalElement(s('view_close'), wait)) {
+        await this.waitAndTap(s('view_close'));
+      } else if (await this.waitForOptionalElement(s('btn_ok'), 500)) {
+        await this.waitAndTap(s('btn_ok'));
+      } else break;
+      dismissed = true;
+    }
+    return dismissed;
+  }
+
   async dismissPermissionsAndModals(): Promise<void> {
     // "Important Note" in-app dialog
-    if (await this.waitForOptionalElement(s('btn_ok'), 10000)) {
-      await this.waitAndTap(s('btn_ok'));
-    }
+    await this.dismissIntroScreens(10000);
     // Android system permission dialogs (phone, SMS, notifications — up to 6 prompts)
     for (let i = 0; i < 6; i++) {
       let dismissed = false;
@@ -164,7 +179,10 @@ export class LoginPage extends BasePage {
             break;
           }
         }
-        return this.isDisplayed(s('tv_title'));
+        // "New Feature!" intros carry a tv_title too; clear them before the Dashboard counts.
+        if (await this.dismissIntroScreens(500)) return false;
+        // tv_total_savings is Dashboard-only; tv_title is shared with the login screen ("Group Login").
+        return this.isDisplayed(s('tv_total_savings'));
       },
       { timeout: 180000, interval: 1000 },
     );

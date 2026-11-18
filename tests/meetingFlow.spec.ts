@@ -110,7 +110,7 @@ describe(`DreamSave — Meeting Flow (${loginData.groupName})`, () => {
 
   it('Step 9 — backs up meeting data and ends the meeting', async () => {
     const { backupTitle, completedMeeting } = await meeting.endMeeting();
-    expect(backupTitle).toMatch(/backed up/i);
+    expect(backupTitle).toMatch(/backed up|saved to the internet/i);
     expect(completedMeeting).toBe(`Meeting ${completedBefore + 1}`);
   });
 

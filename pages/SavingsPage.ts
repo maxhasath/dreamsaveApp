@@ -40,6 +40,7 @@ export class SavingsPage extends MeetingBasePage {
   // one entry for each. Returns the chosen members and one row per recorded saving.
   async doSavings(entries: MemberSavings[]): Promise<SavingsResult> {
     await this.tapMenuItem('Savings');
+    await this.dismissAwardDialogs(3000); // conditional "Here it is!" data-sharing intro
     await this.waitForElement(s('tv_member_name'), 10000);
     const members = pickRandom(await this.readAllTexts(s('tv_member_name')), entries.length, 'savings members');
     for (let i = 0; i < entries.length; i++) {

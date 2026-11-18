@@ -1,7 +1,7 @@
 import { LoginPage } from '../pages/LoginPage';
 import { loginData } from '../data/testData';
 
-describe('DreamSave — Group Login Flow (Village Sunrise)', () => {
+describe(`DreamSave — Group Login Flow (${process.env.TEST_ENV ?? 'stage'})`, () => {
   const login = new LoginPage();
 
   it('Step 1 — selects Zambia as country and taps Get Started!', async () => {
@@ -26,7 +26,7 @@ describe('DreamSave — Group Login Flow (Village Sunrise)', () => {
     await login.submitLogin();
   });
 
-  it('Step 6 — verifies Dashboard shows Village Sunrise group details', async () => {
+  it('Step 6 — verifies Dashboard shows the group details', async () => {
     const groupName = await login.getGroupName();
     expect(groupName).toContain(loginData.groupName);
 
