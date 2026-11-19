@@ -151,7 +151,8 @@ DreamSave_Project/
 │   └── env.ts          # All environment config — the ONLY place for pkg names / APK paths
 ├── data/
 │   ├── testData.ts     # 8-member group, login and meeting data; seeded random helpers (pickRandom/randomInt)
-│   └── testData6.ts    # 6-member group-creation data
+│   ├── testData6.ts    # 6-member group-creation data
+│   └── testDataNewCycle.ts  # new-cycle (first cycle, 5 members) group-creation data
 ├── pages/
 │   ├── BasePage.ts            # Shared wait/interaction utilities — extend this in every page object
 │   ├── WelcomePage.ts, PermissionsPage.ts, GroupSetupPage.ts, PartnerPage.ts, CycleConfigPage.ts,
@@ -166,6 +167,7 @@ DreamSave_Project/
 ├── tests/
 │   ├── groupCreation.test.ts   # 8-member group creation (do not change without being asked)
 │   ├── groupCreation6.test.ts  # 6-member group creation
+│   ├── groupCreationNewCycle.test.ts  # new-cycle group creation (first cycle, 5 members)
 │   ├── groupLogin.spec.ts      # Group Login flow
 │   └── meetingFlow.spec.ts     # 10-step meeting flow (runs Group Login first)
 ├── wdio.conf.ts         # WDIO + Appium runner config (reads from config/env.ts)
@@ -197,6 +199,7 @@ Failure screenshots are saved to `screenshots/` (gitignored) via the `afterTest`
 ```bash
 npm run test:group-creation-8   # 8-member group creation
 npm run test:group-creation-6   # 6-member group creation
+npm run test:group-creation-new-cycle   # new-cycle group creation (5 members)
 npm run test:group-login        # Group Login
 npm run test:meeting-flow       # Meeting flow (clears app data, logs in, runs 10 steps)
 ```

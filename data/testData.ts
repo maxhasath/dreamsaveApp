@@ -1,4 +1,6 @@
+import { PARTNER } from '../config/env';
 import { credentials } from '../config/credentials';
+import { loadNextCycleCredentials } from '../config/credentials/nextCycleLogin';
 
 // Test data derived strictly from Workflow_Steps.md (gemini-code-1792916146057.md).
 // Do not add or change values here without cross-referencing the source-of-truth file.
@@ -157,8 +159,8 @@ export const testData = {
 
   partner: {
     worksWithNgo: true,
-    id: '2403',
-    name: 'World Vision',
+    id: PARTNER.id,     // per environment, see config/env.ts (prod uses the test partner 0000)
+    name: PARTNER.name,
   },
 
   cycle: {
@@ -328,7 +330,7 @@ export interface MemberSavings {
 }
 
 export const meetingData = {
-  sharePrice: 2000, // ZMW per share — fixed in the Village Sunrise constitution
+  sharePrice: 2000, // ZMW per share — the test groups on every environment use this price
   // Two randomly chosen members each get one of these entries.
   savings: [
     { shares: '5', socialPayment: '500' },
@@ -342,4 +344,33 @@ export const meetingData = {
     term:    '2-Months (10%)',
     purpose: 'Agriculture',
   },
+};
+
+// ─── Next Cycle Setup flow data ───────────────────────────────────────────────
+
+// Login for the Next Cycle Setup test group (credentials file is gitignored).
+export const getNextCycleLoginData = () => ({ country: credentials.country, ...loadNextCycleCredentials() });
+
+// The next cycle starts today and shares out on the first same weekday at least 3 months later
+// (DD/MM/YYYY), so the meeting day always matches both dates.
+function nextCycleSchedule(): { startDate: string; shareOutDate: string; meetingDay: string } {
+  const DAYS  = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const threeMonths = new Date(start.getFullYear(), start.getMonth() + 3, start.getDate());
+  const shareOut = new Date(
+    threeMonths.getFullYear(), threeMonths.getMonth(),
+    threeMonths.getDate() + ((start.getDay() - threeMonths.getDay() + 7) % 7),
+  );
+  const fmt = (d: Date): string =>
+    [String(d.getDate()).padStart(2, '0'), String(d.getMonth() + 1).padStart(2, '0'), d.getFullYear()].join('/');
+  return { startDate: fmt(start), shareOutDate: fmt(shareOut), meetingDay: DAYS[start.getDay()] };
+}
+
+export const nextCycleData = {
+  schedule: nextCycleSchedule(),
+  // Phase 3: starting investment (shares) entered for each member of the next cycle.
+  initialInvestmentShares: '5',
+  // Phase 2: what to do with remaining Social / other fund balances at shareout.
+  otherFundsAtShareout: 'transfer' as 'transfer' | 'payout',
 };

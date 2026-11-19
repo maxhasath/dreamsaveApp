@@ -165,7 +165,7 @@ export class LoginPage extends BasePage {
       const loginEl = await $(scrollIntoViewInstance('btn_login', 0));
       await this.tapElement(loginEl);
     }
-    // "Downloading new updates for your group…" sync progress — Village Sunrise needs up to 3 min.
+    // "Downloading new updates for your group…" sync progress — a large group can need up to 3 min.
     // The Android notification permission dialog may appear mid-sync and block tv_group_name,
     // so dismiss it inside the loop rather than waiting until after.
     await this.waitForOptionalElement(s('pb_sync_progress'), 3000);

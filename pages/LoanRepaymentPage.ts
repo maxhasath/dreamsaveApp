@@ -58,4 +58,17 @@ export class LoanRepaymentPage extends MeetingBasePage {
     await this.waitForMenu();
     return results;
   }
+
+  // Settles one specific member's loan in full — used when a flow must repay the loan it just
+  // created (doLoanRepayment picks borrowers at random).
+  async settleLoan(member: string): Promise<RepaymentResult> {
+    await this.tapMenuItem('Loan Repayments');
+    await this.waitForElement(s('tv_member_name'), 10000);
+    const outstandingLoans = (await this.readAllTexts(s('tv_member_name'))).length;
+    const result = await this.repayMember(member, 'full', outstandingLoans);
+
+    await this.scrollToAndTap(s('btn_verify_cash_box'));
+    await this.waitForMenu();
+    return result;
+  }
 }

@@ -7,6 +7,8 @@
     "test:group-creation": "wdio run wdio.conf.ts --spec ./tests/groupCreation.test.ts",
     "test:group-creation-8": "wdio run wdio.conf.ts --spec ./tests/groupCreation.test.ts",
     "test:group-creation-6": "wdio run wdio.conf.ts --spec ./tests/groupCreation6.test.ts",
+    "test:group-creation-new-cycle": "wdio run wdio.conf.ts --spec ./tests/groupCreationNewCycle.test.ts",
+    "test:next-cycle": "wdio run wdio.meeting.conf.ts --spec ./tests/nextCycleSetup.spec.ts",
     "test:group-login": "wdio run wdio.conf.ts --spec ./tests/groupLogin.spec.ts",
     "test:meeting-flow": "wdio run wdio.meeting.conf.ts --spec ./tests/meetingFlow.spec.ts",
     "tsc:check": "tsc --noEmit"

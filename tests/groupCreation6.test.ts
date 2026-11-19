@@ -68,7 +68,7 @@ describe('DreamSave — Group Creation Flow (6 members)', () => {
 
   // ─── Step 3: Partner Integration ─────────────────────────────────────────────
 
-  it('Step 3 — enters Partner ID 2403 (World Vision) and approves data permissions', async () => {
+  it(`Step 3 — enters Partner ID ${testData.partner.id} and approves data permissions`, async () => {
     if (testData.partner.worksWithNgo) {
       await partner.confirmWorksWithNgo();
     }

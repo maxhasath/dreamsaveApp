@@ -126,6 +126,7 @@ export class MeetingPage extends MeetingBasePage {
     await this.signAndConfirm();
 
     await this.scrollToAndTap(s('btn_verify'));
+    await this.dismissAwardDialogs(); // conditional award / intro screen before the menu returns
     await this.waitForMenu();
     return { ...figures, signer };
   }

@@ -1,3 +1,4 @@
+import { PARTNER } from '../config/env';
 // Test data derived strictly from Workflow_Steps.md (gemini-code-1792916146057.md).
 // 6-member variant — do not add or change values here without cross-referencing the source-of-truth file.
 
@@ -119,8 +120,8 @@ export const testData6 = {
 
   partner: {
     worksWithNgo: true,
-    id: '2403',
-    name: 'World Vision',
+    id: PARTNER.id,     // per environment, see config/env.ts (prod uses the test partner 0000)
+    name: PARTNER.name,
   },
 
   cycle: {

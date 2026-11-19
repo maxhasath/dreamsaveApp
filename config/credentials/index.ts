@@ -1,18 +1,26 @@
 import { EnvName } from '../env';
 import { LoginCredentials } from './types';
-import { devCredentials }   from './dev';
-import { stageCredentials } from './stage';
-import { qaCredentials }    from './qa';
-import { prodCredentials }  from './prod';
 
-const BY_ENV: Record<EnvName, LoginCredentials> = {
-  dev: devCredentials, stage: stageCredentials, qa: qaCredentials, prod: prodCredentials,
-};
+// Real credentials live in config/credentials/<env>.ts, which is gitignored. Copy
+// <env>.example.ts to <env>.ts and fill it in — or set the DS_MEMBER* variables below.
+function loadFile(env: EnvName): LoginCredentials {
+  try {
+    // Loaded lazily so only the selected environment's file has to exist.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require(`./${env}`);
+    return mod[`${env}Credentials`] as LoginCredentials;
+  } catch {
+    throw new Error(
+      `No credentials for TEST_ENV="${env}": copy config/credentials/${env}.example.ts to ` +
+      `config/credentials/${env}.ts and fill it in (or set the DS_MEMBER* environment variables).`,
+    );
+  }
+}
 
 // DS_MEMBER<1-3>_DREAM_ID / DS_MEMBER<1-3>_PASSCODE override the file values (e.g. CI secrets).
 const fromEnv = (name: string, fallback: string): string => process.env[name] ?? fallback;
 
-const base = BY_ENV[(process.env.TEST_ENV ?? 'stage') as EnvName];
+const base = loadFile((process.env.TEST_ENV ?? 'stage') as EnvName);
 
 export const credentials: LoginCredentials = {
   ...base,

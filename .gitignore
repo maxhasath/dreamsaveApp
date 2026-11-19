@@ -23,3 +23,12 @@ run5groups.ps1
 Thumbs.db
 *.docx
 gemini-code-*
+
+# Real test-group credentials (templates are *.example.ts)
+config/credentials/stage.ts
+config/credentials/qa.ts
+config/credentials/dev.ts
+config/credentials/prod.ts
+
+# Next Cycle Setup test-group credentials (template: nextCycle.example.ts)
+config/credentials/nextCycle.ts
