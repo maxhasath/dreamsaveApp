@@ -5,8 +5,6 @@ export const devCredentials: LoginCredentials = {
   country:     'Zambia',
   groupName:   '',
   groupNumber: '',
-  members:     [],
-  chairperson: '',
   member1: { dreamId: '', passcode: '' },
   member2: { dreamId: '', passcode: '' },
   member3: { dreamId: '', passcode: '' },

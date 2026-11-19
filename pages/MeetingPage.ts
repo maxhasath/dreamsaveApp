@@ -77,7 +77,9 @@ export class MeetingPage extends MeetingBasePage {
     await this.swipeList('up', 4);
   }
 
-  async doAttendance(): Promise<number> {
+  // Returns the group roster as listed on the Attendance screen (the source of truth for
+  // the later steps' member checks).
+  async doAttendance(): Promise<string[]> {
     await this.tapMenuItem('Attendance');
     await this.waitForElement(s('rcv_member_attendance'), 15000);
     const members = await this.readAllTexts(s('tv_member_name'));
@@ -86,7 +88,7 @@ export class MeetingPage extends MeetingBasePage {
     await this.scrollToAndTap(s('btn_done'));
     await this.dismissAwardDialogs();
     await this.waitForMenu();
-    return members.length;
+    return members;
   }
 
   // ─── Step 3: Opening Summary ─────────────────────────────────────────────────

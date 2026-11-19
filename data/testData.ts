@@ -328,8 +328,6 @@ export interface MemberSavings {
 }
 
 export const meetingData = {
-  members:     credentials.members,
-  chairperson: credentials.chairperson,
   sharePrice: 2000, // ZMW per share — fixed in the Village Sunrise constitution
   // Two randomly chosen members each get one of these entries.
   savings: [

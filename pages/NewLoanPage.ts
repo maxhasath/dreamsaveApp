@@ -47,14 +47,21 @@ export class NewLoanPage extends MeetingBasePage {
   // "Total Loan Fund" and "Max Loan" under Current Balances.
   async doNewLoan(loanData: LoanRequest): Promise<LoanSummary> {
     await this.tapMenuItem('New Loans');
-    await this.waitForElement(ELIGIBLE_NAME, 10000);
+    // An empty list is a valid state (every member already has a loan): fail with the reason.
+    await this.waitForOptionalElement(ELIGIBLE_NAME, 10000);
     const eligible = await this.readAllTexts(ELIGIBLE_NAME);
-    const member   = pickRandom(eligible, 1, 'borrower')[0];
+    if (eligible.length === 0) {
+      throw new Error('No eligible borrower: every member already has an outstanding loan');
+    }
+    const member = pickRandom(eligible, 1, 'borrower')[0];
     await this.tapMemberRow(member);
 
     const totalLoanFund = await this.readNumber(s('tv_new_loan_fund'));
     const maxLoan       = await this.readNumber(s('tv_max_loan'));
     const requested     = Math.min(parseInt(loanData.amount, 10), totalLoanFund, maxLoan);
+    if (requested <= 0) {
+      throw new Error(`Cannot create a loan: Total Loan Fund is ${totalLoanFund}, Max Loan is ${maxLoan}`);
+    }
     await this.fillLoanForm({ ...loanData, amount: String(requested) });
 
     const summary = await this.readLoanSummary();
