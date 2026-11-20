@@ -1,4 +1,5 @@
 import { BasePage, s, byText } from './BasePage';
+import { PAGE_SWIPE } from './gestures';
 
 // Tabs are id-less TextViews inside the tab strip, so text is the only stable locator.
 export const MEETINGS_TAB = 'android=new UiSelector().className("android.widget.TextView").text("Meetings")';
@@ -75,7 +76,7 @@ export class MeetingBasePage extends BasePage {
       // scrollGesture finds no scrollable on some taller pages (e.g. Attendance with 8 members),
       // leaving the target under the nav bar. If it did not move, swipe the page with a finger.
       if (before !== null && before === await this.topOf(selector)) {
-        await driver.execute('mobile: swipeGesture', { left: 100, top: 400, width: 880, height: 1200, direction: 'up', percent: 0.5 });
+        await driver.execute('mobile: swipeGesture', PAGE_SWIPE);
         await browser.pause(300); // intentional stabilization: swipe momentum — no UIAutomator2 end signal
       }
     }

@@ -148,7 +148,11 @@ Adding a new environment = one new entry in `CONFIGS` in `config/env.ts` only.
 DreamSave_Project/
 ├── apps/               # APK binaries (gitignored)
 ├── config/
-│   └── env.ts          # All environment config — the ONLY place for pkg names / APK paths
+│   ├── env.ts          # All environment config — the ONLY place for pkg names / APK paths / partner ID
+│   └── credentials/    # Login credentials per environment (see "Credentials" below)
+│       ├── <env>.example.ts, nextCycle.example.ts   # committed templates
+│       ├── <env>.ts, nextCycle.ts                   # real values — GITIGNORED, never commit
+│       └── index.ts, nextCycleLogin.ts, types.ts    # loaders (clear error when a file is missing)
 ├── data/
 │   ├── testData.ts     # 8-member group, login and meeting data; seeded random helpers (pickRandom/randomInt)
 │   ├── testData6.ts    # 6-member group-creation data
@@ -160,6 +164,10 @@ DreamSave_Project/
 │   ├── LoginPage.ts           # Group Login + ensureLoggedIn
 │   ├── MeetingBasePage.ts     # Shared meeting helpers: menu, scrolling (swipeList), enterDigits, signatures, award dialogs
 │   ├── MeetingPage.ts         # Meetings tab, start, Attendance, Opening/Closing Summary, Back up & End
+│   ├── gestures.ts, timeouts.ts   # swipe region and named wait timeouts, each defined once
+│   ├── NewCycleSetupPage.ts, NewCycleMemberPage.ts   # new-cycle group creation (first cycle)
+│   ├── NextCycleBasePage.ts   # finger-swipe reach for buttons hidden under the nav bar
+│   ├── NextCycleSetupPage.ts, NextCycleShareoutPage.ts, NextCycleClosingPage.ts   # Next Cycle Setup flow
 │   ├── SavingsPage.ts         # Savings
 │   ├── FinesPage.ts           # Fines
 │   ├── NewLoanPage.ts         # New Loans
@@ -169,6 +177,7 @@ DreamSave_Project/
 │   ├── groupCreation6.test.ts  # 6-member group creation
 │   ├── groupCreationNewCycle.test.ts  # new-cycle group creation (first cycle, 5 members)
 │   ├── groupLogin.spec.ts      # Group Login flow
+│   ├── nextCycleSetup.spec.ts  # meeting → shareout → new cycle setup → register → backup
 │   └── meetingFlow.spec.ts     # 10-step meeting flow (runs Group Login first)
 ├── wdio.conf.ts         # WDIO + Appium runner config (reads from config/env.ts)
 ├── wdio.meeting.conf.ts # Extends wdio.conf.ts: *.spec.ts specs, bail, screenshot + page-source on failure
@@ -202,7 +211,16 @@ npm run test:group-creation-6   # 6-member group creation
 npm run test:group-creation-new-cycle   # new-cycle group creation (5 members)
 npm run test:group-login        # Group Login
 npm run test:meeting-flow       # Meeting flow (clears app data, logs in, runs 10 steps)
+npm run test:next-cycle         # Next Cycle Setup: meeting, shareout, new cycle setup, register, backup
 ```
+
+### Next Cycle Setup — how it runs
+- Needs the Next Cycle test group of the chosen `TEST_ENV` in `config/credentials/nextCycle.ts`.
+- Every run shares out the group's current cycle and registers a new one, which leaves the group
+  ready for the next run. Phase 0 checks the group is in an active cycle ("Start New Meeting");
+  a group already shared out ("Create New Cycle") fails there with that label.
+- If a run stops partway, finish the setup by hand (Create New Cycle → register) before re-running.
+- The wizard page titles asserted in the spec are English text and live in `nextCycleData.wizardPages`.
 
 ---
 
@@ -216,5 +234,14 @@ of a run. Replay a failing run exactly with:
 $env:TEST_SEED = "123456"; npm run test:meeting-flow   # PowerShell
 TEST_SEED=123456 npm run test:meeting-flow              # Bash / CI
 ```
-Stage login credentials default to the stage test group; override with `DS_MEMBER<1-3>_DREAM_ID` / `DS_MEMBER<1-3>_PASSCODE`.
+
+## 7. Credentials
+
+Real Dream IDs and passcodes are never committed (this repo is public):
+- `config/credentials/<env>.ts` (stage | qa | dev | prod) and `config/credentials/nextCycle.ts` are
+  gitignored. Copy the matching `*.example.ts` and fill it in; a missing file fails with that hint.
+- `DS_MEMBER<1-3>_DREAM_ID` / `DS_MEMBER<1-3>_PASSCODE` override the group-login credentials
+  (e.g. from CI secrets).
+- `nextCycle.ts` holds one login set per environment, picked by `TEST_ENV`.
+
 Locators for the Meetings tab and menu items are English text (those views have no resource-ids).

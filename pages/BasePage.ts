@@ -5,6 +5,7 @@
 // or use Appium Inspector to confirm all accessibility IDs before execution.
 
 import { APP_PKG as _APP_PKG } from '../config/env';
+import { SWIPE_LEFT, SWIPE_WIDTH } from './gestures';
 export const APP_PKG = _APP_PKG;
 
 // Builds a full resource-id selector from the short element name.
@@ -85,13 +86,13 @@ export class BasePage {
   // a nested RecyclerView that starts around y=1900 on the Review screen).
   async scrollDown(top = 400, height = 1400, percent = 0.8): Promise<void> {
     await driver.execute('mobile: scrollGesture', {
-      left: 100, top, width: 880, height, direction: 'down', percent,
+      left: SWIPE_LEFT, top, width: SWIPE_WIDTH, height, direction: 'down', percent,
     });
   }
 
   async scrollUp(top = 400, height = 1400, percent = 0.8): Promise<void> {
     await driver.execute('mobile: scrollGesture', {
-      left: 100, top, width: 880, height, direction: 'up', percent,
+      left: SWIPE_LEFT, top, width: SWIPE_WIDTH, height, direction: 'up', percent,
     });
   }
 

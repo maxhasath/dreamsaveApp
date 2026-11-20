@@ -353,7 +353,7 @@ export const getNextCycleLoginData = () => ({ country: credentials.country, ...l
 
 // The next cycle starts today and shares out on the first same weekday at least 3 months later
 // (DD/MM/YYYY), so the meeting day always matches both dates.
-function nextCycleSchedule(): { startDate: string; shareOutDate: string; meetingDay: string } {
+function nextCycleSchedule(): { startDate: string; shareOutDate: string; meetingDay: string; meetings: number } {
   const DAYS  = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -364,7 +364,9 @@ function nextCycleSchedule(): { startDate: string; shareOutDate: string; meeting
   );
   const fmt = (d: Date): string =>
     [String(d.getDate()).padStart(2, '0'), String(d.getMonth() + 1).padStart(2, '0'), d.getFullYear()].join('/');
-  return { startDate: fmt(start), shareOutDate: fmt(shareOut), meetingDay: DAYS[start.getDay()] };
+  // Weekly meetings, counting both the first and the last day (same weekday, so whole weeks apart).
+  const meetings = Math.round((shareOut.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return { startDate: fmt(start), shareOutDate: fmt(shareOut), meetingDay: DAYS[start.getDay()], meetings };
 }
 
 export const nextCycleData = {
@@ -373,4 +375,15 @@ export const nextCycleData = {
   initialInvestmentShares: '5',
   // Phase 2: what to do with remaining Social / other fund balances at shareout.
   otherFundsAtShareout: 'transfer' as 'transfer' | 'payout',
+  // Roster size of the Next Cycle test groups (each member gets its own Phase 3 test).
+  memberCount: 5,
+  // Titles of the wizard pages the app shows, in order (consecutive repeats collapsed).
+  wizardPages: {
+    groupProfile: ['Group Profile', 'Partner Affiliation', 'Partner Permission', 'Completed Cycles'],
+    constitution: [
+      'Savings', 'Savings (shares)', 'Loans', 'Interest Method', 'Loan Terms', 'Interest Rate',
+      'Co-Signers', 'Social Fund', 'Additional Funds', 'Fines', 'Notifications and Receipts',
+    ],
+    officers: ['Elect Officers', 'Choosing Great Leaders', 'Elect Officers', 'Choose Bookkeeper'],
+  },
 };

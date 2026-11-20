@@ -1,6 +1,7 @@
 import { s } from './BasePage';
 import { NextCycleBasePage } from './NextCycleBasePage';
 import type { ClosingSummary } from './MeetingPage';
+import { TIMEOUT } from './timeouts';
 
 // Meeting menu → Closing Summary, for the Next Cycle Setup flow.
 // Same steps as MeetingPage.doClosingSummary; only the final Done tap differs (see
@@ -22,7 +23,7 @@ export class NextCycleClosingPage extends NextCycleBasePage {
     await this.scrollTo(s('view_officer_selected'));
     const signerEl = await this.waitForElement(s('tv_signer_name'));
     const signer   = await signerEl.getText();
-    await this.waitAndTap(s('view_officer_selected'), 10000);
+    await this.waitAndTap(s('view_officer_selected'), TIMEOUT.ui);
     await this.signAndConfirm();
 
     await this.swipeToAndTap(s('btn_verify'));

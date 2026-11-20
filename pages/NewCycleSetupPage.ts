@@ -1,4 +1,5 @@
 import { BasePage, s, byText } from './BasePage';
+import { TIMEOUT } from './timeouts';
 
 // New-cycle group setup steps that differ from the mid-cycle flows.
 export class NewCycleSetupPage extends BasePage {
@@ -11,14 +12,14 @@ export class NewCycleSetupPage extends BasePage {
       await this.waitAndTap(s('cb_first_cycle'));
       await this.waitForCheckedState(cb);
     }
-    await this.waitAndTap(s('btn_next'), 10000);
+    await this.waitAndTap(s('btn_next'), TIMEOUT.ui);
 
-    await this.waitAndTap(s('rd_opt_two'), 10000);
-    await this.waitAndTap(s('btn_next'), 10000);
+    await this.waitAndTap(s('rd_opt_two'), TIMEOUT.ui);
+    await this.waitAndTap(s('btn_next'), TIMEOUT.ui);
   }
 
   async isOnSetupChecklist(): Promise<boolean> {
-    return this.waitForOptionalElement(s('rcv_group_menu'), 15000);
+    return this.waitForOptionalElement(s('rcv_group_menu'), TIMEOUT.screen);
   }
 
   // After the last member the app shows the Member Profiles list; Done returns to the checklist
@@ -27,33 +28,33 @@ export class NewCycleSetupPage extends BasePage {
   async finishMemberList(): Promise<void> {
     const elect = byText('txt_item', 'Elect Officers');
     for (let attempt = 0; attempt < 3; attempt++) {
-      if (await this.waitForOptionalElement(elect, 3000)) return;
-      if (await this.waitForOptionalElement(s('btn_done'), 10000)) {
+      if (await this.waitForOptionalElement(elect, TIMEOUT.brief)) return;
+      if (await this.waitForOptionalElement(s('btn_done'), TIMEOUT.ui)) {
         await this.tapElement(await this.waitForElement(s('btn_done')));
       }
-      if (await this.waitForOptionalElement(elect, 8000)) return;
+      if (await this.waitForOptionalElement(elect, TIMEOUT.moderate)) return;
     }
-    await this.waitForElement(elect, 10000);
+    await this.waitForElement(elect, TIMEOUT.ui);
   }
 
   // Back on the checklist after the officers, "Register Group" is the last item to open.
   async tapRegisterGroup(): Promise<void> {
     const register = byText('txt_item', 'Register Group');
-    await this.waitForElement(register, 30000);
+    await this.waitForElement(register, TIMEOUT.long);
     await this.tapElement(await $(register));
   }
 
   // A new cycle has no Confirm Cycle Data review: after the officers the app registers the group
   // and shows "Congratulations! <group> — Your group setup is now complete".
   async waitForSetupComplete(): Promise<{ groupName: string; message: string }> {
-    const messageEl = await this.waitForElement(s('tv_setup_completed'), 60000);
+    const messageEl = await this.waitForElement(s('tv_setup_completed'), TIMEOUT.sync);
     const nameEl    = await this.waitForElement(s('tv_name'));
     return { groupName: await nameEl.getText(), message: await messageEl.getText() };
   }
 
   // Next on the completion screen leads to "Back up Group".
   async continueToBackup(): Promise<void> {
-    await this.waitAndTap(s('btn_next'), 10000);
-    await this.waitForElement(s('btn_backup_now'), 30000);
+    await this.waitAndTap(s('btn_next'), TIMEOUT.ui);
+    await this.waitForElement(s('btn_backup_now'), TIMEOUT.long);
   }
 }
