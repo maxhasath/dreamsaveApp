@@ -1,5 +1,6 @@
 import { s, byText } from './BasePage';
 import { MeetingBasePage, MEETINGS_TAB } from './MeetingBasePage';
+import { PAGE_SWIPE } from './gestures';
 
 const ALLOW_LOCATION = 'id:com.android.permissioncontroller:id/permission_allow_foreground_only_button';
 const SEND_SMS       = 'android=new UiSelector().className("android.widget.Button").textMatches("(?i)send.*")';
@@ -107,6 +108,18 @@ export class MeetingPage extends MeetingBasePage {
 
   // ─── Step 8: Closing Summary ─────────────────────────────────────────────────
 
+  // The Done footer can sit entirely under the nav bar on a taller page (e.g. one with a Group
+  // Goal section), where it cannot even be located and scrollGesture does not scroll the page.
+  // Swipe with a finger until it is clear of the nav bar; when it already is, nothing is swiped.
+  private async tapClosingDone(): Promise<void> {
+    for (let i = 0; i < 8; i++) {
+      if (await this.waitForOptionalElement(s('btn_verify'), 1000) && await this.isClearOfNavBar(s('btn_verify'))) break;
+      await driver.execute('mobile: swipeGesture', PAGE_SWIPE);
+      await browser.pause(300); // intentional stabilization: swipe momentum — no UIAutomator2 end signal
+    }
+    await this.tapElement(await this.waitForElement(s('btn_verify'), 10000));
+  }
+
   async doClosingSummary(): Promise<ClosingSummary> {
     await this.tapMenuItem('Closing Summary');
     const figures = {
@@ -125,7 +138,7 @@ export class MeetingPage extends MeetingBasePage {
     await this.waitAndTap(s('view_officer_selected'), 10000);
     await this.signAndConfirm();
 
-    await this.scrollToAndTap(s('btn_verify'));
+    await this.tapClosingDone();
     await this.dismissAwardDialogs(); // conditional award / intro screen before the menu returns
     await this.waitForMenu();
     return { ...figures, signer };
