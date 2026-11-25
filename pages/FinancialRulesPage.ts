@@ -28,13 +28,18 @@ export class FinancialRulesPage extends BasePage {
   }
 
   // Constitution wizard pages 4–5: Interest Method Step 1 and Step 2
+  // Step 2 offers Added / Subtracted after One-time, and Declining / Fixed after Monthly.
   async selectLoanInterestType(type: string): Promise<void> {
     if (type.toLowerCase().includes('one-time') || type.toLowerCase().includes('one time')) {
       await this.waitAndTap(s('rd_one_time'));
     } else {
       await this.waitAndTap(s('rd_monthly_type'));
     }
-    if (type.toLowerCase().includes('added')) {
+    if (type.toLowerCase().includes('fixed')) {
+      await this.waitAndTap(s('rd_monthly_fixed'));
+    } else if (type.toLowerCase().includes('declining')) {
+      await this.waitAndTap(s('rd_monthly'));
+    } else if (type.toLowerCase().includes('added')) {
       await this.waitAndTap(s('rd_added'));
     } else {
       await this.waitAndTap(s('rd_subtract'));

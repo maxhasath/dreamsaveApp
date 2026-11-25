@@ -17,12 +17,23 @@ const pickUnique = <T>(pool: T[], count: number): T[] => [...pool].sort(() => Ma
 const formatDate = (d: Date): string =>
   [String(d.getDate()).padStart(2, '0'), String(d.getMonth() + 1).padStart(2, '0'), d.getFullYear()].join('/');
 
-// Starts today; shares out on the first same weekday at least 3 months later, so the meeting
+// The cycle starts today, or on NC_START_DATE (DD/MM/YYYY) when set — for one-off backdated
+// groups created with the phone's date set back to that day.
+function cycleStartDate(): Date {
+  const override = process.env.NC_START_DATE;
+  if (override) {
+    const [day, month, year] = override.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+}
+
+// Shares out on the first same weekday at least 3 months after the start, so the meeting
 // day always matches both dates.
 function generateSchedule(): { startDate: string; shareOutDate: string; meetingDay: string } {
   const DAYS  = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const start = cycleStartDate();
   const threeMonths = new Date(start.getFullYear(), start.getMonth() + 3, start.getDate());
   const diff = (start.getDay() - threeMonths.getDay() + 7) % 7;
   const shareOut = new Date(threeMonths.getFullYear(), threeMonths.getMonth(), threeMonths.getDate() + diff);
@@ -74,7 +85,7 @@ export const testDataNewCycle = {
   financialRules: {
     sharePriceZmw: '2000',
     loanInterestRate: '10',
-    loanInterestType: 'One-time added',
+    loanInterestType: process.env.NC_INTEREST_TYPE ?? 'One-time added', // e.g. "Monthly fixed"
     loanTermMonths: '3',
     requiresCoSigners: false,
     fineIncomeRouting: 'Loan Fund',
